@@ -8,6 +8,7 @@
 namespace Orc.NuGetExplorer
 {
     using NuGet;
+    using NuGet.Configuration;
 
     internal class NuGetPackageSourceProvider : PackageSourceProvider
     {

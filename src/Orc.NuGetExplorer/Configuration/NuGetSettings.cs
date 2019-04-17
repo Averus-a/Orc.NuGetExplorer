@@ -13,6 +13,7 @@ namespace Orc.NuGetExplorer
     using Catel;
     using Catel.Configuration;
     using NuGet;
+    using NuGet.Configuration;
 
     internal class NuGetSettings : ISettings
     {
@@ -330,5 +331,37 @@ namespace Orc.NuGetExplorer
             return $"NuGet_{section}_{subsection}_values";
         }
         #endregion
+
+        public SettingSection GetSection(string sectionName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddOrUpdate(string sectionName, SettingItem item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Remove(string sectionName, SettingItem item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SaveToDisk()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<string> GetConfigFilePaths()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<string> GetConfigRoots()
+        {
+            throw new NotImplementedException();
+        }
+
+        public event EventHandler SettingsChanged;
     }
 }

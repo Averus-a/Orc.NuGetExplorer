@@ -9,22 +9,23 @@ namespace Orc.NuGetExplorer
 {
     using Catel;
     using NuGet;
+    using NuGet.Packaging.Core;
 
     internal static class IPackageExtensions
     {
         #region Methods
-        public static bool IsPrerelease(this IPackage package)
+        public static bool IsPrerelease(this PackageIdentity package)
         {
             Argument.IsNotNull(() => package);
 
-            return !string.IsNullOrWhiteSpace(package.Version.SpecialVersion);
+            return package.Version.IsPrerelease;
         }
 
-        public static string GetKeyForCache(this IPackage package, bool allowPrereleaseVersions)
+        public static string GetKeyForCache(this PackageIdentity package, bool allowPrereleaseVersions)
         {
             Argument.IsNotNull(() => package);
 
-            return string.Format("{0}_{1}_{2}", package.GetType().Name, package.GetFullName(), allowPrereleaseVersions);
+            return $"{package.GetType().Name}_{package.Version.Version}_{package.Version.Revision}";
         }
         #endregion
     }

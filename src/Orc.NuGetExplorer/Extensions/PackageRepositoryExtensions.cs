@@ -13,12 +13,13 @@ namespace Orc.NuGetExplorer
     using Catel;
     using MethodTimer;
     using NuGet;
+    using NuGet.Packaging.Core;
 
     internal static class PackageRepositoryExtensions
     {
         #region Methods
         [Time]
-        public static IReadOnlyList<IPackage> FindAll(this IPackageRepository packageRepository, bool allowPrereleaseVersions,
+        public static IReadOnlyList<PackageIdentity> FindAll(this IPackageRepository packageRepository, bool allowPrereleaseVersions,
             int skip = 0, int take = 10)
         {
             Argument.IsNotNull(() => packageRepository);
@@ -27,7 +28,7 @@ namespace Orc.NuGetExplorer
         }
 
         [Time]
-        public static IReadOnlyList<IPackage> FindFiltered(this IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions,
+        public static IReadOnlyList<PackageIdentity> FindFiltered(this IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions,
             int skip = 0, int take = 10)
         {
             Argument.IsNotNull(() => packageRepository);
@@ -49,12 +50,12 @@ namespace Orc.NuGetExplorer
             }
         }
 
-        private static IEnumerable<IPackage> FindFilteredManually(this IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions,
+        private static IEnumerable<PackageIdentity> FindFilteredManually(this IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions,
             int skip = 0, int take = 10)
         {
             Argument.IsNotNull(() => packageRepository);
 
-            IEnumerable<IPackage> packages;
+            IEnumerable<PackageIdentity> packages;
 
             switch (packageRepository)
             {
@@ -88,7 +89,7 @@ namespace Orc.NuGetExplorer
             }
         }
 
-        private static IQueryable<IPackage> CreateSearchQuery(this IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions,
+        private static IQueryable<PackageIdentity> CreateSearchQuery(this IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions,
             int skip = 0, int take = 10)
         {
             var queryable = packageRepository.Search(filter, allowPrereleaseVersions)
@@ -101,19 +102,19 @@ namespace Orc.NuGetExplorer
         }
 
         [Time]
-        public static IEnumerable<IPackage> FindPackageVersions(this IPackageRepository packageRepository, IPackage package, bool allowPrereleaseVersions,
+        public static IEnumerable<PackageIdentity> FindPackageVersions(this IPackageRepository packageRepository, IPackage package, bool allowPrereleaseVersions,
             ref int skip, int minimalTake = 10)
         {
             Argument.IsNotNull(() => packageRepository);
 
             if (skip < 0)
             {
-                return Enumerable.Empty<IPackage>();
+                return Enumerable.Empty<PackageIdentity>();
             }
 
             var queryable = packageRepository.GetPackages().Where(x => Equals(x.Id, package.Id)).Skip(skip).Take(minimalTake);
 
-            var result = new List<IPackage>(queryable.ToList());
+            var result = new List<PackageIdentity>(queryable.ToList());
 
             if (result.Count < minimalTake)
             {

@@ -8,11 +8,12 @@
 namespace Orc.NuGetExplorer
 {
     using NuGet;
+    using NuGet.Packaging.Core;
 
     internal static class IPackageDetailsExtensions
     {
         #region Methods
-        public static IPackage ToNuGetPackage(this IPackageDetails package)
+        public static PackageIdentity ToNuGetPackage(this IPackageDetails package)
         {
             return ((PackageDetails) package).Package;
         }

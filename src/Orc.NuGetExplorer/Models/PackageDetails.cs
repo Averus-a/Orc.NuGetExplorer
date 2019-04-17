@@ -15,6 +15,7 @@ namespace Orc.NuGetExplorer
     using Catel.Data;
 
     using NuGet;
+    using NuGet.Packaging.Core;
 
     internal class PackageDetails : ModelBase, IPackageDetails
     {
@@ -114,7 +115,7 @@ namespace Orc.NuGetExplorer
 
         public Uri IconUrl { get; }
 
-        internal IPackage Package { get; }
+        internal PackageIdentity Package { get; }
 
         public DateTime? Published { get; }
 
