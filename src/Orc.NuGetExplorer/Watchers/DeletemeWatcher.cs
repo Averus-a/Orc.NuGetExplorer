@@ -31,7 +31,7 @@ namespace Orc.NuGetExplorer
                 return;
             }
 
-            var fileName = $"{e.Package.Id}.deleteme";
+            var fileName = $"{e.PackageDetails.Id}.deleteme";
             var fullName = Path.Combine(e.InstallPath, fileName);
 
             using (File.Create(fullName))

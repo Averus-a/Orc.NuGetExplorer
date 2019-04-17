@@ -9,19 +9,18 @@ namespace Orc.NuGetExplorer
 {
     using Catel;
     using NuGet;
-    using NuGet.Packaging.Core;
 
     internal static class IPackageExtensions
     {
         #region Methods
-        public static bool IsPrerelease(this Package package)
+        public static bool IsPrerelease(this IPackage package)
         {
             Argument.IsNotNull(() => package);
 
             return !string.IsNullOrWhiteSpace(package.Version.SpecialVersion);
         }
 
-        public static string GetKeyForCache(this Package package, bool allowPrereleaseVersions)
+        public static string GetKeyForCache(this IPackage package, bool allowPrereleaseVersions)
         {
             Argument.IsNotNull(() => package);
 

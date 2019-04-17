@@ -6,16 +6,12 @@
 
 namespace Orc.NuGetExplorer
 {
-    using System.Threading.Tasks;
-
     public interface IApiPackageRegistry
     {
-        #region Methods
         void Register(string packageName, string version);
 
         bool IsRegistered(string packageName);
 
-        Task ValidateAsync(IPackage package);
-        #endregion
+        void Validate(IPackageDetails package);
     }
 }

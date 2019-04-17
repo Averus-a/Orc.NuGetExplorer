@@ -10,11 +10,11 @@ namespace Orc.NuGetExplorer
     internal interface IPagingService
     {
         #region Methods
-        void UpdatePagingItems(Pager pager);
+        //void UpdatePagingItems(Pager pager);
         void Step(Pager pager, int stepValue);
-        void MoveToLast(Pager pager);
+        //void MoveToLast(Pager pager);
         void MoveToFirst(Pager pager);
-        void StepTo(Pager pager, PagingItemInfo pagingItem);
+        //void StepTo(Pager pager, PagingItemInfo pagingItem);
         bool IsLastPage(Pager pager);
         #endregion
     }

@@ -7,12 +7,10 @@
 
 namespace Orc.NuGetExplorer
 {
-    using System.Threading.Tasks;
     using Catel;
-    using Catel.Threading;
-    using NuGet.Common;
+    using NuGet;
 
-    internal class NuGetLogger : LoggerBase
+    internal class NuGetLogger : ILogger
     {
         #region Fields
         private readonly INuGetLogListeningSevice _logListeningService;
@@ -26,37 +24,33 @@ namespace Orc.NuGetExplorer
             _logListeningService = logListeningService;
         }
         #endregion
-        
+
         #region Methods
-        public override void Log(ILogMessage message)
+        public FileConflictResolution ResolveFileConflict(string message)
         {
-            switch (message.Level)
-            {
-                case LogLevel.Debug:
-                    _logListeningService.SendDebug(message.Message);
-                    break;
-
-                case LogLevel.Information:
-                case LogLevel.Verbose:
-                case LogLevel.Minimal:
-                    _logListeningService.SendInfo(message.Message);
-                    break;
-
-                case LogLevel.Error:
-                    _logListeningService.SendError(message.Message);
-                    break;
-
-                case LogLevel.Warning:
-                    _logListeningService.SendWarning(message.Message);
-                    break;
-            }
+            return FileConflictResolution.IgnoreAll;
         }
 
-        public override Task LogAsync(ILogMessage message)
+        public void Log(MessageLevel level, string message, params object[] args)
         {
-            Log(message);
+            switch (level)
+            {
+                case MessageLevel.Debug:
+                    _logListeningService.SendDebug(string.Format(message, args));
+                    break;
 
-            return TaskHelper.Completed;
+                case MessageLevel.Info:
+                    _logListeningService.SendInfo(string.Format(message, args));
+                    break;
+
+                case MessageLevel.Error:
+                    _logListeningService.SendError(string.Format(message, args));
+                    break;
+
+                case MessageLevel.Warning:
+                    _logListeningService.SendWarning(string.Format(message, args));
+                    break;
+            }
         }
         #endregion
     }

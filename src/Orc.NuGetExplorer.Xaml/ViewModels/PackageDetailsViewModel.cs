@@ -9,6 +9,7 @@ namespace Orc.NuGetExplorer.ViewModels
 {
     using System.ComponentModel;
     using System.IO.Packaging;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Documents;
 
@@ -25,7 +26,7 @@ namespace Orc.NuGetExplorer.ViewModels
         #endregion
 
         #region Constructors
-        public PackageDetailsViewModel(IPackage package, IPackageDetailsService packageDetailsService, IPackageQueryService packageQueryService, IRepositoryNavigatorService repositoryNavigatorService)
+        public PackageDetailsViewModel(IPackageDetails package, IPackageDetailsService packageDetailsService, IPackageQueryService packageQueryService, IRepositoryNavigatorService repositoryNavigatorService)
         {
             Argument.IsNotNull(() => package);
             Argument.IsNotNull(() => packageDetailsService);
@@ -42,7 +43,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         #region Properties
         [Model(SupportIEditableObject = false)]
-        public IPackage Package { get; private set; }
+        public IPackageDetails Package { get; private set; }
 
         public FlowDocument PackageSummary { get; private set; }
         #endregion
@@ -54,30 +55,31 @@ namespace Orc.NuGetExplorer.ViewModels
 
             if (Package is ModelBase modelBase)
             {
-                modelBase.PropertyChanged += (sender, args) =>
+                modelBase.PropertyChanged += async (sender, args) =>
                     {
                         var selectedVersionPropertyName = nameof(Package.SelectedVersion);
                         if (args.HasPropertyChanged(selectedVersionPropertyName))
                         {
-                            BuildPackageSummary();
+                            await BuildPackageSummaryAsync();
                         }
                     };
             }
 
-            BuildPackageSummary();
+            await BuildPackageSummaryAsync();
         }
 
-        private void BuildPackageSummary()
+        private async Task BuildPackageSummaryAsync()
         {
             //// Fix: Required since available versions aren't available until dropdown button is displayed.
             if (!string.IsNullOrWhiteSpace(Package.SelectedVersion) && Package.Version.ToString() != Package.SelectedVersion)
             {
-                var packageSummary = _packageQueryService.GetPackage(_repositoryNavigatorService.Navigator.SelectedRepository, Package.Id, Package.SelectedVersion);
-                PackageSummary = _packageDetailsService.PackageToFlowDocument(packageSummary);
+                var package = await _packageQueryService.GetExactPackageAsync(_repositoryNavigatorService.Navigator.SelectedRepository.SourceRepository,
+                    Package.Id, Package.SelectedVersion, CancellationToken.None);
+                PackageSummary = await _packageDetailsService.PackageToFlowDocumentAsync(package);
             }
             else
             {
-                PackageSummary = _packageDetailsService.PackageToFlowDocument(Package);
+                PackageSummary = await _packageDetailsService.PackageToFlowDocumentAsync(Package);
             }
         }
         #endregion

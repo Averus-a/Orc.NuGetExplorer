@@ -8,67 +8,76 @@ namespace Orc.NuGetExplorer.ViewModels
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
     using System.Windows.Input;
     using Catel;
     using Catel.MVVM;
+    using NuGet.Protocol.Core.Types;
 
     public sealed class SelectablePackageDetailsViewModel : ViewModelBase
     {
         #region Fields
-        private readonly IPackage _package;
+        private readonly IPackageDetails _packageDetails;
         #endregion
 
         #region Constructors
-        public SelectablePackageDetailsViewModel(IPackage package)
+        public SelectablePackageDetailsViewModel(IPackageDetails packageDetails)
         {
-            Argument.IsNotNull(() => package);
+            Argument.IsNotNull(() => packageDetails);
 
-            _package = package;
+            _packageDetails = packageDetails;
 
             SelectPackageVersionCommand = new Command<string>(Execute);
         }
         #endregion
 
         #region Properties
-        public Uri IconUrl => _package?.IconUrl;
+        public Uri IconUrl => _packageDetails?.IconUrl;
 
-        public override string Title => _package?.Title;
+        public override string Title => _packageDetails?.Title;
 
-        public IList<string> AvailableVersions => _package?.AvailableVersions;
+        public IReadOnlyList<VersionInfo> AvailableVersions { get; private set; }
 
         public ICommand SelectPackageVersionCommand { get; }
 
         public bool? IsInstalled
         {
-            get => _package?.IsInstalled;
+            get => _packageDetails?.IsInstalled;
             set
             {
-                if (_package != null)
+                if (_packageDetails != null)
                 {
-                    _package.IsInstalled = value;
+                    _packageDetails.IsInstalled = value;
                 }
             }
         }
 
-        public string Description => _package?.Description;
+        public string Description => _packageDetails?.Description;
 
         public string SelectedVersion
         {
-            get => _package?.SelectedVersion;
+            get => _packageDetails?.SelectedVersion;
             set
             {
-                if (_package != null)
+                if (_packageDetails != null)
                 {
-                    _package.SelectedVersion = value;
+                    _packageDetails.SelectedVersion = value;
                 }
             }
         }
 
-        public IPackage Package => _package;
+        public IPackageDetails PackageDetails => _packageDetails;
 
         #endregion
 
         #region Methods
+        protected override async Task InitializeAsync()
+        {
+            AvailableVersions = await _packageDetails.AvailableVersions;
+
+            await base.InitializeAsync();
+        }
+
         private void Execute(string version)
         {
             SelectedVersion = version;

@@ -10,6 +10,7 @@ namespace Orc.NuGetExplorer.ViewModels
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Catel;
     using Catel.Collections;
@@ -18,25 +19,23 @@ namespace Orc.NuGetExplorer.ViewModels
     using Catel.MVVM;
     using Catel.Scoping;
     using Catel.Threading;
+    using NuGet.Configuration;
     using Scopes;
 
     internal class PackageSourceSettingViewModel : ViewModelBase
     {
         #region Fields
         private readonly INuGetFeedVerificationService _nuGetFeedVerificationService;
-        private readonly IPackageSourceFactory _packageSourceFactory;
 
         private bool _ignoreNextPackageUpdate;
         #endregion
 
         #region Constructors
-        public PackageSourceSettingViewModel(INuGetFeedVerificationService nuGetFeedVerificationService, IPackageSourceFactory packageSourceFactory)
+        public PackageSourceSettingViewModel(INuGetFeedVerificationService nuGetFeedVerificationService)
         {
             Argument.IsNotNull(() => nuGetFeedVerificationService);
-            Argument.IsNotNull(() => packageSourceFactory);
 
             _nuGetFeedVerificationService = nuGetFeedVerificationService;
-            _packageSourceFactory = packageSourceFactory;
 
             Add = new Command(OnAddExecute);
             Remove = new Command(OnRemoveExecute, OnRemoveCanExecute);
@@ -47,11 +46,11 @@ namespace Orc.NuGetExplorer.ViewModels
 
         #region Properties
         public IList<EditablePackageSource> EditablePackageSources { get; private set; }
-        public IEnumerable<IPackageSource> PackageSources { get; set; }
+        public IEnumerable<PackageSource> PackageSources { get; set; }
 
         [Model(SupportIEditableObject = false)]
-        [Expose("Name")]
-        [Expose("Source")]
+        [Expose(nameof(EditablePackageSource.Name))]
+        [Expose(nameof(EditablePackageSource.Source))]
         public EditablePackageSource SelectedPackageSource { get; set; }
 
         public string DefaultFeed { get; set; }
@@ -90,30 +89,28 @@ namespace Orc.NuGetExplorer.ViewModels
         protected override void OnModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.OnModelPropertyChanged(sender, e);
-            if (string.Equals(e.PropertyName, "Name"))
+            if (string.Equals(e.PropertyName, nameof(EditablePackageSource.Name)))
             {
                 VerifyAll();
             }
 
-            if (string.Equals(e.PropertyName, "Source"))
+            if (!string.Equals(e.PropertyName, nameof(EditablePackageSource.Source)))
             {
-                var selectedPackageSource = SelectedPackageSource;
-                if (selectedPackageSource == null)
-                {
-                    return;
-                }
+                return;
+            }
 
-                if (selectedPackageSource.IsValid == null)
-                {
-                    return;
-                }
+            var selectedPackageSource = SelectedPackageSource;
 
-                selectedPackageSource.IsValid = false;
+            if (selectedPackageSource?.IsValid == null)
+            {
+                return;
+            }
+
+            selectedPackageSource.IsValid = false;
 
 #pragma warning disable 4014
-                VerifyPackageSourceAsync(selectedPackageSource);
+            VerifyPackageSourceAsync(selectedPackageSource);
 #pragma warning restore 4014
-            }
         }
 
         protected override async Task<bool> SaveAsync()
@@ -135,7 +132,7 @@ namespace Orc.NuGetExplorer.ViewModels
             {
                 using (ScopeManager<AuthenticationScope>.GetScopeManager(x.Source.GetSafeScopeName(), () => new AuthenticationScope(false)))
                 {
-                    var packageSource = _packageSourceFactory.CreatePackageSource(x.Source, x.Name, x.IsEnabled, false);
+                    var packageSource = new PackageSource(x.Source, x.Name, x.IsEnabled, false);
                     return packageSource;
                 }
             }).ToArray();
@@ -154,12 +151,14 @@ namespace Orc.NuGetExplorer.ViewModels
 
             if (!(SelectedPackageSource.IsValidName ?? false))
             {
-                validationResults.Add(FieldValidationResult.CreateError("Name", "Package source name '{0}' is empty or not unique.", SelectedPackageSource.Name));
+                validationResults.Add(FieldValidationResult.CreateError(nameof(EditablePackageSource.Name),
+                    $"Package source name '{SelectedPackageSource.Name}' is empty or not unique."));
             }
 
             if (!(SelectedPackageSource.IsValidSource ?? false))
             {
-                validationResults.Add(FieldValidationResult.CreateError("Source", "Package source '{0}' is invalid.", SelectedPackageSource.Source));
+                validationResults.Add(FieldValidationResult.CreateError(nameof(EditablePackageSource.Source), 
+                    $"Package source '{SelectedPackageSource.Source}' is invalid."));
             }
         }
 
@@ -202,7 +201,7 @@ namespace Orc.NuGetExplorer.ViewModels
                 isValidName = !string.IsNullOrWhiteSpace(nameToValidate) && namesCount == 1;
 
                 var validate = feedToValidate;
-                var feedVerificationResult = await TaskHelper.Run(() => _nuGetFeedVerificationService.VerifyFeed(validate, true), true);
+                var feedVerificationResult = await _nuGetFeedVerificationService.VerifyFeedAsync(validate, true, CancellationToken.None);
 
                 packageSource.FeedVerificationResult = feedVerificationResult;
                 isValidUrl = feedVerificationResult != FeedVerificationResult.Invalid && feedVerificationResult != FeedVerificationResult.Unknown;
@@ -322,14 +321,9 @@ namespace Orc.NuGetExplorer.ViewModels
 
             EditablePackageSources.RemoveAt(index);
 
-            if (index < EditablePackageSources.Count)
-            {
-                SelectedPackageSource = EditablePackageSources[index];
-            }
-            else
-            {
-                SelectedPackageSource = EditablePackageSources.LastOrDefault();
-            }
+            SelectedPackageSource = index < EditablePackageSources.Count 
+                ? EditablePackageSources[index] 
+                : EditablePackageSources.LastOrDefault();
 
             VerifyAll();
         }

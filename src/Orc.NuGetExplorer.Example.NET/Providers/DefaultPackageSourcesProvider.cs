@@ -9,13 +9,14 @@ namespace Orc.NuGetExplorer.Example
 {
     using System.Collections.Generic;
     using System.Linq;
+    using NuGet.Configuration;
 
     public class DefaultPackageSourcesProvider : IDefaultPackageSourcesProvider
     {
         #region Methods
-        public IEnumerable<IPackageSource> GetDefaultPackages()
+        public IEnumerable<PackageSource> GetDefaultPackages()
         {
-            return Enumerable.Empty<IPackageSource>();
+            return Enumerable.Empty<PackageSource>();
         }
         #endregion
     }

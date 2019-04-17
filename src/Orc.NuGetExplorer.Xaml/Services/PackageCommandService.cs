@@ -8,16 +8,20 @@
 namespace Orc.NuGetExplorer
 {
     using System;
-
+    using System.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Catel;
+    using Catel.IoC;
     using Catel.Services;
+    using NuGet.Protocol.Core.Types;
 
     internal class PackageCommandService : IPackageCommandService
     {
         #region Fields
         private readonly IApiPackageRegistry _apiPackageRegistry;
 
-        private readonly IRepository _localRepository;
+        private readonly SourceRepository _localRepository;
 
         private readonly IPackageOperationContextService _packageOperationContextService;
 
@@ -29,7 +33,22 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Constructors
-        public PackageCommandService(IPleaseWaitService pleaseWaitService, IRepositoryService repositoryService, IPackageQueryService packageQueryService, IPackageOperationService packageOperationService, IPackageOperationContextService packageOperationContextService, IApiPackageRegistry apiPackageRegistry)
+        //public PackageCommandService(IServiceLocator serviceLocator)
+        //{
+        //    _pleaseWaitService = serviceLocator.ResolveType<IPleaseWaitService>();
+
+        //    _packageQueryService = serviceLocator.ResolveType<IPackageQueryService>();
+        //    _packageOperationService = serviceLocator.ResolveType<IPackageOperationService>();
+        //    _packageOperationContextService = serviceLocator.ResolveType<IPackageOperationContextService>();
+        //    _apiPackageRegistry = serviceLocator.ResolveType<IApiPackageRegistry>();
+
+        //    var repositoryService = serviceLocator.ResolveType<IRepositoryService>();
+        //    _localRepository = repositoryService.LocalRepository;
+        //}
+
+        public PackageCommandService(IPleaseWaitService pleaseWaitService, IRepositoryService repositoryService, IPackageQueryService packageQueryService, 
+            IPackageOperationService packageOperationService, IPackageOperationContextService packageOperationContextService, 
+            IApiPackageRegistry apiPackageRegistry)
         {
             Argument.IsNotNull(() => pleaseWaitService);
             Argument.IsNotNull(() => packageQueryService);
@@ -53,11 +72,11 @@ namespace Orc.NuGetExplorer
             return Enum.GetName(typeof(PackageOperationType), operationType);
         }
 
-        public void Execute(PackageOperationType operationType, IPackage package, IRepository sourceRepository = null, bool allowedPrerelease = false)
+        public async Task ExecuteAsync(PackageOperationType operationType, IPackageDetails packageDetails, IRepository sourceRepository = null, bool allowedPrerelease = false)
         {
-            Argument.IsNotNull(() => package);
+            Argument.IsNotNull(() => packageDetails);
 
-            var selectedPackage = GetPackageDetailsFromSelectedVersion(package, sourceRepository ?? _localRepository) ?? package;
+            var selectedPackage = await GetPackageDetailsFromSelectedVersionAsync(packageDetails, sourceRepository?.SourceRepository ?? _localRepository) ?? packageDetails;
 
             using (_pleaseWaitService.WaitingScope())
             {
@@ -81,25 +100,25 @@ namespace Orc.NuGetExplorer
                 }
             }
 
-            package.IsInstalled = null;
+            packageDetails.IsInstalled = null;
         }
 
-        public bool CanExecute(PackageOperationType operationType, IPackage package)
+        public async Task<bool> CanExecuteAsync(PackageOperationType operationType, IPackageDetails package)
         {
             if (package == null)
             {
                 return false;
             }
 
-            var selectedPackage = GetPackageDetailsFromSelectedVersion(package, _localRepository) ?? package;
+            var selectedPackage = await GetPackageDetailsFromSelectedVersionAsync(package, _localRepository) ?? package;
 
             switch (operationType)
             {
                 case PackageOperationType.Install:
-                    return CanInstall(selectedPackage);
+                    return await CanInstallAsync(selectedPackage);
 
                 case PackageOperationType.Update:
-                    return CanUpdate(selectedPackage);
+                    return await CanUpdateAsync(selectedPackage);
 
                 case PackageOperationType.Uninstall:
                     return true;
@@ -130,46 +149,47 @@ namespace Orc.NuGetExplorer
             return $"{Enum.GetName(typeof(PackageOperationType), operationType)} all";
         }
 
-        private IPackage GetPackageDetailsFromSelectedVersion(IPackage package, IRepository repository)
+        private async Task<IPackageDetails> GetPackageDetailsFromSelectedVersionAsync(IPackageDetails packageDetails, SourceRepository repository)
         {
-            if (!string.IsNullOrWhiteSpace(package.SelectedVersion) && package.Version.ToString() != package.SelectedVersion)
+            if (!string.IsNullOrWhiteSpace(packageDetails.SelectedVersion) && packageDetails.Version.ToString() != packageDetails.SelectedVersion)
             {
-                package = _packageQueryService.GetPackage(repository, package.Id, package.SelectedVersion);
+                packageDetails = await _packageQueryService.GetExactPackageAsync(repository, packageDetails.Id, packageDetails.SelectedVersion, CancellationToken.None);
             }
 
-            return package;
+            return packageDetails;
         }
 
-        private bool CanInstall(IPackage package)
+        private async Task<bool> CanInstallAsync(IPackageDetails package)
         {
             Argument.IsNotNull(() => package);
 
             if (package.IsInstalled == null)
             {
-                var count = _packageQueryService.CountPackages(_localRepository, package.Id);
-                package.IsInstalled = count != 0;
-                ValidatePackage(package);
+                var somePackages = await _packageQueryService.GetPackagesAsync(_localRepository, package.Id, true, 1, CancellationToken.None);
+                package.IsInstalled = somePackages.Any();
+                await ValidatePackageAsync(package);
             }
 
             return package.IsInstalled != null && !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;
         }
 
-        private void ValidatePackage(IPackage package)
+        private Task ValidatePackageAsync(IPackageDetails package)
         {
             package.ResetValidationContext();
-            _apiPackageRegistry.Validate(package);
+            
+            return _apiPackageRegistry.ValidateAsync(package);
         }
 
-        private bool CanUpdate(IPackage package)
+        private async Task<bool> CanUpdateAsync(IPackageDetails package)
         {
             Argument.IsNotNull(() => package);
 
             if (package.IsInstalled == null)
             {
-                var count = _packageQueryService.CountPackages(_localRepository, package);
-                package.IsInstalled = count != 0;
+                var somePackages = await _packageQueryService.GetPackagesAsync(_localRepository, package.Id, true, 1, CancellationToken.None);
+                package.IsInstalled = somePackages.Any();
 
-                ValidatePackage(package);
+                await ValidatePackageAsync(package);
             }
 
             return !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;

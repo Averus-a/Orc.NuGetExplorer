@@ -13,9 +13,7 @@ namespace Orc.NuGetExplorer
     using Catel;
     using Catel.Configuration;
     using NuGet;
-    using NuGet.Configuration;
 
-#pragma warning disable 618
     internal class NuGetSettings : ISettings
     {
         #region Fields
@@ -42,39 +40,24 @@ namespace Orc.NuGetExplorer
 
             var settingValue = GetValues(section, isPath).FirstOrDefault(x => string.Equals(x.Key, key));
 
-            var result = settingValue is null ? string.Empty : settingValue.Value;
+            var result = settingValue == null ? string.Empty : settingValue.Value;
 
             return result;
         }
 
-        public IReadOnlyList<string> GetAllSubsections(string section)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<SettingValue> GetSettingValues(string section, bool isPath = false)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<KeyValuePair<string, string>> GetNestedValues(string section, string subSection)
-        {
-            Argument.IsNotNullOrWhitespace(() => section);
-            Argument.IsNotNullOrWhitespace(() => subSection);
-
-            return GetNuGetValues(section, subSection);
-        }
-
-        public IReadOnlyList<SettingValue> GetNestedSettingValues(string section, string subSection)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<KeyValuePair<string, string>> GetValues(string section, bool isPath)
+        public IList<SettingValue> GetValues(string section, bool isPath)
         {
             Argument.IsNotNullOrWhitespace(() => section);
 
             return GetNuGetValues(section, isPath);
+        }
+
+        public IList<SettingValue> GetNestedValues(string section, string subsection)
+        {
+            Argument.IsNotNullOrWhitespace(() => section);
+            Argument.IsNotNullOrWhitespace(() => subsection);
+
+            return GetNuGetValues(section, subsection);
         }
 
         public void SetValue(string section, string key, string value)
@@ -85,7 +68,7 @@ namespace Orc.NuGetExplorer
             SetNuGetValues(section, new[] {new KeyValuePair<string, string>(key, value)});
         }
 
-        public void SetValues(string section, IReadOnlyList<SettingValue> values)
+        public void SetValues(string section, IList<SettingValue> values)
         {
             foreach (var value in values)
             {
@@ -93,7 +76,7 @@ namespace Orc.NuGetExplorer
             }
         }
 
-        public void UpdateSections(string section, IReadOnlyList<SettingValue> values)
+        public void UpdateSections(string section, IList<SettingValue> values)
         {
             DeleteSection(section);
 
@@ -103,11 +86,12 @@ namespace Orc.NuGetExplorer
             }
         }
 
-        public void UpdateSubsections(string section, string subsection, IReadOnlyList<SettingValue> values)
+        public void SetValues(string section, IList<KeyValuePair<string, string>> values)
         {
-            throw new NotImplementedException();
-        }
+            Argument.IsNotNullOrWhitespace(() => section);
 
+            SetNuGetValues(section, values);
+        }
 
         public void SetNestedValues(string section, string key, IList<KeyValuePair<string, string>> values)
         {
@@ -115,11 +99,6 @@ namespace Orc.NuGetExplorer
             Argument.IsNotNullOrWhitespace(() => key);
 
             SetNuGetValues(section, key, values);
-        }
-
-        public void SetNestedSettingValues(string section, string subsection, IList<SettingValue> values)
-        {
-            throw new NotImplementedException();
         }
 
         public bool DeleteValue(string section, string key)
@@ -188,38 +167,6 @@ namespace Orc.NuGetExplorer
             return result;
         }
 
-        public SettingSection GetSection(string sectionName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddOrUpdate(string sectionName, SettingItem item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Remove(string sectionName, SettingItem item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SaveToDisk()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<string> GetConfigFilePaths()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<string> GetConfigRoots()
-        {
-            throw new NotImplementedException();
-        }
-
-        public event EventHandler SettingsChanged;
-
         private void SetNuGetValues(string section, IList<KeyValuePair<string, string>> values)
         {
             Argument.IsNotNullOrWhitespace(() => section);
@@ -279,7 +226,7 @@ namespace Orc.NuGetExplorer
             return result;
         }
 
-        private IList<KeyValuePair<string, string>> GetNuGetValues(string section, bool isPath = false)
+        private IList<SettingValue> GetNuGetValues(string section, bool isPath = false)
         {
             Argument.IsNotNullOrWhitespace(() => section);
 
@@ -287,14 +234,14 @@ namespace Orc.NuGetExplorer
             var valueKeysString = _configurationService.GetRoamingValue<string>(valuesListKey);
             if (string.IsNullOrEmpty(valueKeysString))
             {
-                return new List<KeyValuePair<string, string>>();
+                return new List<SettingValue>();
             }
             var keys = valueKeysString.Split(Separator);
 
             return keys.Select(key => GetNuGetValue(section, key, isPath)).ToList();
         }
 
-        private IList<KeyValuePair<string, string>> GetNuGetValues(string section, string subsection, bool isPath = false)
+        private IList<SettingValue> GetNuGetValues(string section, string subsection, bool isPath = false)
         {
             Argument.IsNotNullOrWhitespace(() => section);
             Argument.IsNotNullOrWhitespace(() => subsection);
@@ -303,7 +250,7 @@ namespace Orc.NuGetExplorer
             var valueKeysString = _configurationService.GetRoamingValue<string>(valuesListKey);
             if (string.IsNullOrEmpty(valueKeysString))
             {
-                return new List<KeyValuePair<string, string>>();
+                return new List<SettingValue>();
             }
 
             var keys = valueKeysString.Split(Separator);
@@ -311,7 +258,7 @@ namespace Orc.NuGetExplorer
             return keys.Select(key => GetNuGetValue(section, subsection, key, isPath)).ToList();
         }
 
-        private KeyValuePair<string, string> GetNuGetValue(string section, string key, bool isPath)
+        private SettingValue GetNuGetValue(string section, string key, bool isPath)
         {
             Argument.IsNotNullOrWhitespace(() => section);
             Argument.IsNotNullOrWhitespace(() => key);
@@ -324,10 +271,10 @@ namespace Orc.NuGetExplorer
                 value = ConvertToFullPath(value);
             }
 
-            return new KeyValuePair<string, string>(key, value);
+            return new SettingValue(key, value, false);
         }
 
-        private KeyValuePair<string, string> GetNuGetValue(string section, string subsection, string key, bool isPath)
+        private SettingValue GetNuGetValue(string section, string subsection, string key, bool isPath)
         {
             Argument.IsNotNullOrWhitespace(() => section);
             Argument.IsNotNullOrWhitespace(() => subsection);
@@ -341,7 +288,7 @@ namespace Orc.NuGetExplorer
                 value = ConvertToFullPath(value);
             }
 
-            return new KeyValuePair<string, string>(key, value);
+            return new SettingValue(key, value, false);
         }
 
         private void SetNuGetValue(string section, string key, string value)
@@ -384,6 +331,4 @@ namespace Orc.NuGetExplorer
         }
         #endregion
     }
-#pragma warning restore 618
-
 }

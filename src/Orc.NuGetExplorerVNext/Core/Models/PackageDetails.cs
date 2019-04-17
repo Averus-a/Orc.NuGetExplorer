@@ -1,9 +1,8 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SearchMetadata.cs" company="WildGums">
-//   Copyright (c) 2008 - 2015 WildGums. All rights reserved.
+// <copyright file="PackageDetails.cs" company="WildGums">
+//   Copyright (c) 2008 - 2019 WildGums. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
-
 
 namespace Orc.NuGetExplorer
 {
@@ -16,18 +15,16 @@ namespace Orc.NuGetExplorer
     using Catel.Data;
     using NuGet.Common;
     using NuGet.Frameworks;
-    using NuGet.Packaging;
-    using NuGet.Packaging.Core;
     using NuGet.Protocol.Core.Types;
 
-    internal class Package : ModelBase, IPackage
+    public class PackageDetails : ModelBase, IPackageDetails
     {
         #region Fields
         private readonly SourceRepository _sourceRepository;
         #endregion
 
         #region Constructors
-        internal Package(IPackageSearchMetadata searchMetadata, SourceRepository sourceRepository)
+        internal PackageDetails(IPackageSearchMetadata searchMetadata, SourceRepository sourceRepository)
         {
             Argument.IsNotNull(() => searchMetadata);
             Argument.IsNotNull(() => sourceRepository);
@@ -56,8 +53,8 @@ namespace Orc.NuGetExplorer
 
             Authors = searchMetadata.Authors;
 
-            AvailableVersions = new Nito.AsyncEx.AsyncLazy<IReadOnlyList<VersionInfo>>(GetAllVersionsAsync);
-            Dependencies = new Nito.AsyncEx.AsyncLazy<IReadOnlyList<SourcePackageDependencyInfo>>(GetAllDependenciesAsync);
+            AvailableVersions = new AsyncLazy<IReadOnlyList<VersionInfo>>(GetAllVersionsAsync);
+            Dependencies = new AsyncLazy<IReadOnlyList<SourcePackageDependencyInfo>>(GetAllDependenciesAsync);
         }
         #endregion
 
@@ -74,11 +71,11 @@ namespace Orc.NuGetExplorer
 
         public long? DownloadCount { get; }
 
-        public Nito.AsyncEx.AsyncLazy<IReadOnlyList<SourcePackageDependencyInfo>>  Dependencies { get; }
+        public AsyncLazy<IReadOnlyList<SourcePackageDependencyInfo>>  Dependencies { get; }
 
         public bool? IsInstalled { get; set; }
 
-        public Nito.AsyncEx.AsyncLazy<IReadOnlyList<VersionInfo>> AvailableVersions { get; }
+        public AsyncLazy<IReadOnlyList<VersionInfo>> AvailableVersions { get; }
 
         public string FullName { get; }
 
@@ -86,7 +83,7 @@ namespace Orc.NuGetExplorer
 
         public Uri IconUrl { get; }
 
-        internal IPackageSearchMetadata SearchMetadata { get; }
+        public IPackageSearchMetadata SearchMetadata { get; }
 
         public DateTimeOffset? Published { get; }
 
@@ -120,9 +117,12 @@ namespace Orc.NuGetExplorer
             {
                 sourceCacheContext.MaxAge = DateTimeOffset.UtcNow;
 
-                var dependencyInfos = await dependencyInfoResource.ResolvePackages(Id, NuGetFramework.AnyFramework, 
+                var dependencyInfos = await dependencyInfoResource.ResolvePackages(
+                    Id, 
+                    NuGetFramework.AnyFramework, 
                     sourceCacheContext, 
-                    NullLogger.Instance, CancellationToken.None);
+                    NullLogger.Instance, 
+                    CancellationToken.None);
 
                 return dependencyInfos.ToList();
             }

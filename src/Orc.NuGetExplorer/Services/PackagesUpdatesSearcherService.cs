@@ -40,7 +40,7 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Methods
-        public IEnumerable<IPackage> SearchForUpdates(bool? allowPrerelease = null, bool authenticateIfRequired = true)
+        public IEnumerable<IPackageDetails> SearchForUpdates(bool? allowPrerelease = null, bool authenticateIfRequired = true)
         {
             var scopeManagers = new List<ScopeManager<AuthenticationScope>>();
 
@@ -55,7 +55,7 @@ namespace Orc.NuGetExplorer
                     scopeManagers.Add(scopeManager);
                 }
 
-                var availableUpdates = new List<IPackage>();
+                var availableUpdates = new List<IPackageDetails>();
                 var packageRepository = _repositoryCacheService.GetNuGetRepository(_repositoryService.GetSourceAggregateRepository());
                 var packages = _repositoryCacheService.GetNuGetRepository(_repositoryService.LocalRepository).GetPackages();
 

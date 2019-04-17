@@ -8,12 +8,12 @@
 namespace Orc.NuGetExplorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Net;
-    using System.Threading;
-    using System.Threading.Tasks;
     using Catel;
-    using NuGet.Configuration;
-    using NuGet.Credentials;
+    using Catel.Scoping;
+    using NuGet;
+    using Scopes;
 
     internal class CredentialProvider : ICredentialProvider
     {
@@ -30,29 +30,19 @@ namespace Orc.NuGetExplorer
         }
         #endregion
 
-        #region Properties
-        public string Id { get; }
-        #endregion
-
         #region Methods
-        public async Task<CredentialResponse> GetAsync(Uri uri, IWebProxy proxy, CredentialRequestType type, string message, bool isRetry, bool nonInteractive,
-            CancellationToken cancellationToken)
+        public ICredentials GetCredentials(Uri uri, IWebProxy proxy, CredentialType credentialType, bool retrying)
         {
-            var credentials = await _authenticationProvider.GetCredentialsAsync(uri, isRetry, cancellationToken);
+            // Note: this might cause deadlock, but NuGet is sync while we need async, so keep it this way
+            var credentialsTask = _authenticationProvider.GetCredentialsAsync(uri, retrying);
+            var credentials = credentialsTask.Result;
 
-            if (credentials is null)
+            if (credentials == null || (string.IsNullOrWhiteSpace(credentials.UserName) && string.IsNullOrWhiteSpace(credentials.Password)))
             {
-                return new CredentialResponse(CredentialStatus.UserCanceled);
+                return null;
             }
 
-            if (string.IsNullOrWhiteSpace(credentials.UserName) && string.IsNullOrWhiteSpace(credentials.Password))
-            {
-                return new CredentialResponse(CredentialStatus.ProviderNotApplicable);
-            }
-
-            var networkCredential = new NetworkCredential(credentials.UserName, credentials.Password);
-
-            return new CredentialResponse(networkCredential);
+            return new NetworkCredential(credentials.UserName, credentials.Password);
         }
         #endregion
     }

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IPackage.cs" company="WildGums">
+// <copyright file="IPackageDetails.cs" company="WildGums">
 //   Copyright (c) 2008 - 2015 WildGums. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,12 +9,11 @@ namespace Orc.NuGetExplorer
 {
     using System;
     using System.Collections.Generic;
-
     using Catel.Data;
-    using Nito.AsyncEx;
+    using NuGet.Common;
     using NuGet.Protocol.Core.Types;
 
-    public interface IPackage
+    public interface IPackageDetails
     {
         #region Properties
         string Id { get; }
@@ -48,7 +47,6 @@ namespace Orc.NuGetExplorer
         string SelectedVersion { get; set; }
 
         IValidationContext ValidationContext { get; }
-
         #endregion
 
         #region Methods

@@ -8,13 +8,12 @@
 namespace Orc.NuGetExplorer
 {
     using System;
-    using System.Threading;
     using System.Threading.Tasks;
 
     internal interface IAuthenticationProvider
     {
         #region Methods
-        Task<AuthenticationCredentials> GetCredentialsAsync(Uri uri, bool previousCredentialsFailed, CancellationToken cancellationToken);
+        Task<AuthenticationCredentials> GetCredentialsAsync(Uri uri, bool previousCredentialsFailed);
         #endregion
     }
 }

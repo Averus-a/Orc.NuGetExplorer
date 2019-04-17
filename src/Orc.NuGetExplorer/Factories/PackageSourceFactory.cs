@@ -7,14 +7,12 @@
 
 namespace Orc.NuGetExplorer
 {
-    using NuGet.Configuration;
-
     internal class PackageSourceFactory : IPackageSourceFactory
     {
         #region Methods
-        public PackageSource CreatePackageSource(string source, string name, bool isEnabled, bool isOfficial)
+        public IPackageSource CreatePackageSource(string source, string name, bool isEnabled, bool isOfficial)
         {
-            return new PackageSource(source, name, isEnabled, isOfficial);
+            return new NuGetPackageSource(source, name, isEnabled, isOfficial);
         }
         #endregion
     }

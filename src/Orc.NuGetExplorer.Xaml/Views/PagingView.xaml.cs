@@ -40,14 +40,14 @@ namespace Orc.NuGetExplorer.Views
 
         
         [ViewToViewModel(MappingType = ViewToViewModelMappingType.ViewToViewModel)]
-        public int ItemsCount
+        public bool CanContinue
         {
-            get { return (int) GetValue(ItemsCountProperty); }
-            set { SetValue(ItemsCountProperty, value); }
+            get { return (bool) GetValue(CanContinueProperty); }
+            set { SetValue(CanContinueProperty, value); }
         }
 
-        public static readonly DependencyProperty ItemsCountProperty = DependencyProperty.Register("ItemsCount", typeof(int), typeof(PagingView),
-            new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+        public static readonly DependencyProperty CanContinueProperty = DependencyProperty.Register("CanContinue", typeof(bool), typeof(PagingView),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
         
 
         [ViewToViewModel("ItemsPerPage", MappingType = ViewToViewModelMappingType.ViewToViewModel)]

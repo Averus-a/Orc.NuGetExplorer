@@ -25,7 +25,7 @@ namespace Orc.NuGetExplorer
 
         public void Initialize()
         {
-            RepositoryCategories.ListChanged += OnRepositoryCategoriesChanged;
+            RepositoryCategories.ListChanged += OnRepositoryCategoriesListChanged;
 
             Initialized = true;
         }
@@ -37,7 +37,7 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Methods
-        private void OnRepositoryCategoriesChanged(object sender, ListChangedEventArgs e)
+        private void OnRepositoryCategoriesListChanged(object sender, ListChangedEventArgs e)
         {
             if (e.ListChangedType != ListChangedType.ItemChanged || e.PropertyDescriptor.Name != "IsSelected")
             {

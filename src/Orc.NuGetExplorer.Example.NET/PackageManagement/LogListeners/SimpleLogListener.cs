@@ -20,9 +20,9 @@ namespace Orc.NuGetExplorer.Example
         #endregion
 
         #region Constructors
-        public SimpleLogListener(INuGetLogListeningSevice nuGetLogListeningSevice,
+        public SimpleLogListener(INuGetLogListeningService nuGetLogListeningService,
             IEchoService echoService, IDispatcherService dispatcherService)
-            : base(nuGetLogListeningSevice)
+            : base(nuGetLogListeningService)
         {            
             Argument.IsNotNull(() => echoService);
             Argument.IsNotNull(() => dispatcherService);

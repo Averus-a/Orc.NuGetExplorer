@@ -9,6 +9,7 @@ namespace Orc.NuGetExplorer
 {
     using System.Globalization;
     using System.Linq;
+    using System.Threading.Tasks;
     using System.Windows.Documents;
     using System.Windows.Media;
     using Catel;
@@ -30,7 +31,7 @@ namespace Orc.NuGetExplorer
         }
 
         #region Methods
-        public FlowDocument PackageToFlowDocument(IPackage package)
+        public async Task<FlowDocument> PackageToFlowDocumentAsync(IPackageDetails package)
         {
             Argument.IsNotNull(() => package);
 
@@ -41,7 +42,7 @@ namespace Orc.NuGetExplorer
                 FontSize = 12
             };
 
-            var autors = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_CreatedBy"), package.Authors.ToArray());
+            var autors = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_CreatedBy"), package.Authors);
             paragraph.Inlines.AddIfNotNull(autors);
 
             var id = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Id"), package.Id);
@@ -65,9 +66,10 @@ namespace Orc.NuGetExplorer
             var downloads = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Downloads"), package.DownloadCount.ToString());
             paragraph.Inlines.AddIfNotNull(downloads);
 
-            if (!string.IsNullOrWhiteSpace(package.Dependencies))
+            var dependencyInfos = await package.Dependencies;
+            if (dependencyInfos.Count == 0)
             {
-                var dependencies = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Dependencies"), package.Dependencies);
+                var dependencies = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Dependencies"), dependencyInfos.Select(x => x.Id).ToArray());
                 paragraph.Inlines.AddIfNotNull(dependencies);
             }
 
@@ -85,14 +87,15 @@ namespace Orc.NuGetExplorer
             return result;
         }
 
-        private static string GetVersion(IPackage package)
+        private static string GetVersion(IPackageDetails package)
         {
+            var packageDetails = (PackageDetails)package;
             if (!package.IsPrerelease)
             {
                 return package.Version.ToString();
             }
 
-            return string.Format("{0}-{1}", package.Version, package.SpecialVersion);
+            return packageDetails.SearchMetadata.Identity.Version.OriginalVersion;
         }
 
         private Inline GetAlertRecords(string title, params string[] stringLines)

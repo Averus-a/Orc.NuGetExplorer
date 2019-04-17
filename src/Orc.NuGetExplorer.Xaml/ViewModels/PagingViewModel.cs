@@ -36,49 +36,49 @@ namespace Orc.NuGetExplorer.ViewModels
 
         #region Properties
         [Model(SupportIEditableObject = true)]
-        [Expose("LeftPages")]
-        [Expose("RightPages")]
-        [Expose("CurrentPage")]
+        [Expose(nameof(NuGetExplorer.Pager.LeftPages))]
+        [Expose(nameof(NuGetExplorer.Pager.RightPages))]
+        [Expose(nameof(NuGetExplorer.Pager.CurrentPage))]
         public Pager Pager { get; private set; }
 
-        [ViewModelToModel("Pager")]
+        [ViewModelToModel(nameof(Pager))]
         public int ItemIndex { get; set; }
 
-        [ViewModelToModel("Pager")]
+        [ViewModelToModel(nameof(Pager))]
         public int VisiblePages { get; set; }
 
-        [ViewModelToModel("Pager")]
-        public int ItemsCount { get; set; }
+        [ViewModelToModel(nameof(Pager))]
+        public bool CanContinue { get; set; }
 
-        [ViewModelToModel("Pager")]
+        [ViewModelToModel(nameof(Pager))]
         public int ItemsPerPage { get; set; }
         #endregion
 
         #region Methods
         private void OnVisiblePagesChanged()
         {
-            _pagingService.UpdatePagingItems(Pager);
+       //     _pagingService.UpdatePagingItems(Pager);
         }
 
         private void OnItemsCountChanged()
         {
-            Pager.ItemsCount = ItemsCount; // Note: doesn't refresh automatically
-            _pagingService.UpdatePagingItems(Pager);
+            Pager.CanContinue = CanContinue; // Note: doesn't refresh automatically
+        //    _pagingService.UpdatePagingItems(Pager);
         }
 
         private void OnItemsPerPageChanged()
         {
-            _pagingService.UpdatePagingItems(Pager);
+       //     _pagingService.UpdatePagingItems(Pager);
         }
 
         private void OnItemIndexChanged()
         {
-            _pagingService.UpdatePagingItems(Pager);
+        //    _pagingService.UpdatePagingItems(Pager);
         }
 
         private bool CanMoveForward()
         {
-            var tooFewItems = ItemsCount <= ItemsPerPage;
+            var tooFewItems = !CanContinue;
             var lastPage = _pagingService.IsLastPage(Pager);
             return !lastPage && !tooFewItems;
         }
@@ -89,7 +89,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         private void OnMoveToLastExcute()
         {
-            _pagingService.MoveToLast(Pager);
+         //   _pagingService.MoveToLast(Pager);
         }
 
         private bool OnMoveToLastCanExecute()
@@ -142,7 +142,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         private void OnMoveToPageExecute(PagingItemInfo pagingItem)
         {
-            _pagingService.StepTo(Pager, pagingItem);
+         //   _pagingService.StepTo(Pager, pagingItem);
         }
 
         private bool OnMoveToPageCanExecute(PagingItemInfo pagingItem)

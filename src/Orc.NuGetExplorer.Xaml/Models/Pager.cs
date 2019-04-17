@@ -24,7 +24,7 @@ namespace Orc.NuGetExplorer
         public ObservableCollection<PagingItemInfo> LeftPages { get; set; }
         public ObservableCollection<PagingItemInfo> RightPages { get; set; }
         public int VisiblePages { get; set; }
-        public int ItemsCount { get; set; }
+        public bool CanContinue { get; set; }
         public int ItemsPerPage { get; set; }
         public int ItemIndex { get; set; }
         public string CurrentPage { get; set; }

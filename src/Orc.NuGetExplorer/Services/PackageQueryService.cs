@@ -8,20 +8,18 @@
 namespace Orc.NuGetExplorer
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
     using Catel;
     using Catel.Logging;
-    using NuGet.Protocol.Core.Types;
+    using MethodTimer;
+    using NuGet;
 
     internal class PackageQueryService : IPackageQueryService
     {
         #region Fields
-        private const int PageSize = 25;
-        
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
-
+        private readonly IPackageCacheService _packageCacheService;
         private readonly IRepositoryCacheService _repositoryCacheService;
         #endregion
 
@@ -31,59 +29,115 @@ namespace Orc.NuGetExplorer
             Argument.IsNotNull(() => packageCacheService);
             Argument.IsNotNull(() => repositoryCacheService);
 
+            _packageCacheService = packageCacheService;
             _repositoryCacheService = repositoryCacheService;
         }
         #endregion
 
         #region Methods
-        public async Task<IPackage> GetExactPackage(string packageId, string version, IRepository packageRepository, CancellationToken cancellationToken)
+        public int CountPackages(IRepository packageRepository, IPackageDetails packageDetails)
+        {
+            Argument.IsNotNull(() => packageRepository);
+
+            var count = _repositoryCacheService.GetNuGetRepository(packageRepository).GetPackages().Count(x => string.Equals(x.GetFullName(), packageDetails.FullName));
+            return count;
+        }
+
+        public IPackageDetails GetPackage(IRepository packageRepository, string packageId, string version)
+        {
+            Argument.IsNotNull(() => packageRepository);
+
+            var nuGetRepository = _repositoryCacheService.GetNuGetRepository(packageRepository);
+            var semanticVersion = SemanticVersion.Parse(version);
+            var package = nuGetRepository.FindPackage(packageId, semanticVersion);
+            if (package != null)
+            {
+                return _packageCacheService.GetPackageDetails(nuGetRepository, package, !string.IsNullOrWhiteSpace(semanticVersion.SpecialVersion));
+            }
+
+            return null;
+        }
+
+        public int CountPackages(IRepository packageRepository, string packageId)
+        {
+            Argument.IsNotNull(() => packageRepository);
+
+            var count = _repositoryCacheService.GetNuGetRepository(packageRepository).GetPackages().Count(x => string.Equals(x.Id, packageId));
+            return count;
+        }
+
+        [Time]
+        public int CountPackages(IRepository packageRepository, string filter, bool allowPrereleaseVersions)
         {
             Argument.IsNotNull(() => packageRepository);
 
             var nuGetRepository = _repositoryCacheService.GetNuGetRepository(packageRepository);
 
-            var packageDataList = await nuGetRepository.GetPackageDataListAsync(packageId, true, true, cancellationToken);
-
-            return packageDataList.FirstOrDefault(x => string.Equals(x.OriginalVersion, version));
+            return CountPackages(nuGetRepository, filter, allowPrereleaseVersions);
         }
 
-        public async Task<SearchResult<IPackage>> GetPackagesAsync(string searchText, bool includePrerelease, IRepository packageRepository, CancellationToken cancellationToken)
+        private int CountPackages(IPackageRepository packageRepository, string filter, bool allowPrereleaseVersions)
         {
             Argument.IsNotNull(() => packageRepository);
 
             try
             {
-                Log.Debug($"Getting {PageSize} packages starting from {0}, which contains \'{searchText}\'");
-                var nuGetRepository = _repositoryCacheService.GetNuGetRepository(packageRepository);
+                switch (packageRepository)
+                {
+                    case AggregateRepository aggregateRepository:
+                        return aggregateRepository.Repositories.Select(x => CountPackages(x, filter, allowPrereleaseVersions)).Sum();
 
-                var filter = new SearchFilter(includePrerelease);
+                    default:
+                    {
+                        var queryable = packageRepository.Search(filter, allowPrereleaseVersions)
+                            .Where(x => x.IsAbsoluteLatestVersion || x.IsLatestVersion);
 
-                return await nuGetRepository.SearchAsync(searchText, filter, PageSize, cancellationToken);
+                        return queryable.Count();
+                    }
+                }
             }
-            catch (Exception exception)
+            catch
             {
-                Log.Warning(exception);
-
-                return new SearchResult<IPackage>(new IPackage[0]);
+                return 0;
             }
         }
 
-        public async Task<SearchResult<IPackage>> GetPackagesAsync(SearchCursor searchCursor, IRepository packageRepository, CancellationToken cancellationToken)
+        public IEnumerable<IPackageDetails> GetPackages(IRepository packageRepository, bool allowPrereleaseVersions,
+            string filter = null, int skip = 0, int take = 10)
         {
             Argument.IsNotNull(() => packageRepository);
 
             try
             {
-                Log.Debug($"Getting {PageSize} packages starting from {searchCursor.StartIndex}, which contains \'{searchCursor.SearchString}\'");
+                Log.Debug("Getting {0} packages starting from {1}, which contains \"{2}\"", take, skip, filter);
                 var nuGetRepository = _repositoryCacheService.GetNuGetRepository(packageRepository);
 
-                return await nuGetRepository.SearchAsync(searchCursor, PageSize, cancellationToken);
+                return nuGetRepository.FindFiltered(filter, allowPrereleaseVersions, skip, take).Select(package => _packageCacheService.GetPackageDetails(nuGetRepository, package, allowPrereleaseVersions));
             }
             catch (Exception exception)
             {
                 Log.Warning(exception);
 
-                return new SearchResult<IPackage>(new IPackage[0]);
+                return Enumerable.Empty<PackageDetails>();
+            }
+        }
+
+        public IEnumerable<IPackageDetails> GetVersionsOfPackage(IRepository packageRepository, IPackageDetails package, bool allowPrereleaseVersions, ref int skip, int minimalTake = 10)
+        {
+            Argument.IsNotNull(() => packageRepository);
+
+            try
+            {
+                var nuGetRepository = _repositoryCacheService.GetNuGetRepository(packageRepository);
+
+                return nuGetRepository.FindPackageVersions(package.ToNuGetPackage(), allowPrereleaseVersions, ref skip, minimalTake)
+                    .Select(p => _packageCacheService.GetPackageDetails(nuGetRepository, p, allowPrereleaseVersions));
+            }
+            catch (Exception exception)
+            {
+                Log.Warning(exception);
+
+                return Enumerable.Empty<PackageDetails>();
             }
         }
         #endregion

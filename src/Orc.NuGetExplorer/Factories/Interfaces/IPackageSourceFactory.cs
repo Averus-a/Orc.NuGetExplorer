@@ -7,12 +7,10 @@
 
 namespace Orc.NuGetExplorer
 {
-    using NuGet.Configuration;
-
     public interface IPackageSourceFactory
     {
         #region Methods
-        PackageSource CreatePackageSource(string source, string name, bool isEnabled, bool isOfficial);
+        IPackageSource CreatePackageSource(string source, string name, bool isEnabled, bool isOfficial);
         #endregion
     }
 }

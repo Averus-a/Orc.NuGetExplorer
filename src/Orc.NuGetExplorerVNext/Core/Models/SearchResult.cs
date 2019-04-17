@@ -9,21 +9,39 @@ namespace Orc.NuGetExplorer
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
+    using Catel.Data;
 
-    public sealed class SearchResult<T> : IEnumerable<T>
+    public sealed class SearchResult : SearchResult<IPackageDetails>
+    {
+        public SearchResult(IReadOnlyList<IPackageDetails> items) 
+            : base(items)
+        {
+        }
+    }
+
+    public class SearchResult<T> : ModelBase, IEnumerable<T>
     {
         public SearchResult(IReadOnlyList<T> items)
         {
-            Items = items;
+            PackageList = (List<T>)items;
         }
 
-        public IReadOnlyList<T> Items { get; }
+        public List<T> PackageList { get; private set; }
 
         public SearchCursor Cursor { get; set; }
 
-        public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
+        public bool CanContinue { get; private set; } //=> SearchStatusBySource.Values.Any(x => x != SearchStatus.NoMoreFound && x != SearchStatus.NothingFound);
 
-        IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
+        public IEnumerator<T> GetEnumerator()
+        {
+            return PackageList.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return PackageList.GetEnumerator();
+        }
 
         public IDictionary<string, SearchStatus> SearchStatusBySource { get; set; } = new Dictionary<string, SearchStatus>();
 

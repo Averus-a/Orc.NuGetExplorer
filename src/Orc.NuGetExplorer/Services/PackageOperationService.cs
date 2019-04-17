@@ -10,41 +10,23 @@ namespace Orc.NuGetExplorer
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
     using Catel;
-    using Catel.Threading;
     using NuGet;
-    using NuGet.Common;
-    using NuGet.Configuration;
-    using NuGet.PackageManagement;
-    using NuGet.Packaging;
-    using NuGet.Packaging.Core;
-    using NuGet.Packaging.PackageExtraction;
-    using NuGet.Packaging.Signing;
-    using NuGet.ProjectManagement;
-    using NuGet.Protocol.Core.Types;
-    using NuGet.Resolver;
 
     internal class PackageOperationService : IPackageOperationService
     {
         #region Fields
-        private readonly SourceRepository _localRepository;
+        private readonly IPackageRepository _localRepository;
         private readonly ILogger _logger;
-        private readonly NuGetPackageManager _packageManager;
+        private readonly IPackageManager _packageManager;
         private readonly IPackageOperationContextService _packageOperationContextService;
         private readonly IRepositoryCacheService _repositoryCacheService;
         private readonly IApiPackageRegistry _apiPackageRegistry;
-        private readonly INuGetProjectProvider _nuGetProjectProvider;
-        private readonly ISettings _settings;
-        private readonly ISourceRepositoryProvider _sourceRepositoryProvider;
-        private readonly string _packageFolderPath;
         #endregion
 
         #region Constructors
-        public PackageOperationService(IPackageOperationContextService packageOperationContextService, ILogger logger, NuGetPackageManager packageManager,
-            IRepositoryService repositoryService, IRepositoryCacheService repositoryCacheService, IApiPackageRegistry apiPackageRegistry,
-            INuGetProjectProvider nuGetProjectProvider)
+        public PackageOperationService(IPackageOperationContextService packageOperationContextService, ILogger logger, IPackageManager packageManager,
+            IRepositoryService repositoryService, IRepositoryCacheService repositoryCacheService, IApiPackageRegistry apiPackageRegistry)
         {
             Argument.IsNotNull(() => packageOperationContextService);
             Argument.IsNotNull(() => logger);
@@ -52,208 +34,80 @@ namespace Orc.NuGetExplorer
             Argument.IsNotNull(() => repositoryService);
             Argument.IsNotNull(() => repositoryCacheService);
             Argument.IsNotNull(() => apiPackageRegistry);
-            Argument.IsNotNull(() => nuGetProjectProvider);
 
             _packageOperationContextService = packageOperationContextService;
             _logger = logger;
             _packageManager = packageManager;
             _repositoryCacheService = repositoryCacheService;
             _apiPackageRegistry = apiPackageRegistry;
-            _nuGetProjectProvider = nuGetProjectProvider;
 
             _localRepository = repositoryCacheService.GetNuGetRepository(repositoryService.LocalRepository);
+
+            DependencyVersion = DependencyVersion.Lowest;
         }
         #endregion
 
+        #region Properties
+        internal DependencyVersion DependencyVersion { get; set; }
+        #endregion
+
         #region Methods
-        public void UninstallPackage(IPackage package, bool removeDependencies)
+        public void UninstallPackage(IPackageDetails package)
         {
             Argument.IsNotNull(() => package);
+            Argument.IsOfType(() => package, typeof (PackageDetails));
 
-#pragma warning disable 4014
-            TaskHelper.Run(async delegate
-#pragma warning restore 4014
+            var dependentsResolver = new DependentsWalker(_localRepository, null);
+
+            var walker = new UninstallWalker(_localRepository, dependentsResolver, null,
+                _logger, true, false);
+
+            try
             {
-                var packageManager =
-                    new NuGetPackageManager(
-                        _sourceRepositoryProvider,
-                        _settings,
-                        _packageFolderPath);
-
-                var uninstallContext = new UninstallationContext(removeDependencies, false);
-                var projectContext = new ProjectContext();
-
-                var logger = new LoggerAdapter(projectContext);
-                projectContext.PackageExtractionContext = new PackageExtractionContext(
-                    PackageSaveMode.Defaultv2,
-                    PackageExtractionBehavior.XmlDocFileSaveMode,
-                    ClientPolicyContext.GetClientPolicy(_settings, logger),
-                    logger);
-
-                var nuGetProject = _nuGetProjectProvider.GetProject();
-
-                await packageManager.UninstallPackageAsync(nuGetProject, package.Id, uninstallContext, projectContext, CancellationToken.None);
-            });
-        }
-
-
-        public void InstallPackage(string source, string packageId, Version version, bool ignoreDependencies)
-        {
-
-        }
-
-        public void InstallLatestPackage(string source, string packageId, bool includePrerelease, bool ignoreDependencies)
-        {
-
-        }
-        //public void InstallPackage(IPackage package, bool allowedPrerelease)
-        //{
-        //    Argument.IsNotNull(() => package);
-        //    Argument.IsOfType(() => package, typeof (Package));
-
-        //    var packageManager = CreatePackageManager();
-
-        //    var resolutionContext = new ResolutionContext(DependencyBehavior.Highest, allowedPrerelease, false, VersionConstraints.None);
-
-        //    var nuGetProject = _nuGetProjectProvider.GetProject();
-        //    packageManager.InstallPackageAsync(nuGetProject, package.Id, )
-
-        //    var repository = _packageOperationContextService.CurrentContext.Repository;
-        //    var sourceRepository = _repositoryCacheService.GetNuGetRepository(repository);
-
-        //    var walker = new InstallWalker(_localRepository, sourceRepository, null, _logger, false, allowedPrerelease, DependencyVersion);
-
-        //    try
-        //    {
-        //        ValidatePackage(package);
-        //        var nuGetPackage = EnsurePackageDependencies(((Package)package).SearchMetadata);
-        //        walker.ResolveOperations(nuGetPackage);
-        //        _packageManager.InstallPackage(nuGetPackage, false, allowedPrerelease, false);
-        //    }
-        //    catch (Exception exception)
-        //    {
-        //        _logger.Log(MessageLevel.Error, exception.Message);
-        //        _packageOperationContextService.CurrentContext.CatchedExceptions.Add(exception);
-        //    }
-        //}
-
-        private NuGetPackageManager CreatePackageManager()
-        {
-            var packageManager =
-                new NuGetPackageManager(
-                    _sourceRepositoryProvider,
-                    _settings,
-                    _packageFolderPath);
-            return packageManager;
-        }
-
-        internal async Task InstallInternalAsync(
-            List<PackageIdentity> packages,
-            ProjectContext projectContext,
-            bool includePrerelease,
-            bool ignoreDependencies,
-            CancellationToken token)
-        {
-            // Go off the UI thread. This may be called from the UI thread. Only switch to the UI thread where necessary
-            // This method installs multiple packages and can likely take more than a few secs
-            // So, go off the UI thread explicitly to improve responsiveness
-            await TaskScheduler.Default;
-
-            var gatherCache = new GatherCache();
-            var sources = _sourceRepositoryProvider.GetRepositories().ToList();
-
-
-                var depBehavior = ignoreDependencies ? DependencyBehavior.Ignore : DependencyBehavior.Lowest;
-
-                var packageManager = CreatePackageManager();
-
-                // find the project
-                var nuGetProject = _nuGetProjectProvider.GetProject();
-                var nuGetProject = await _solutionManager.GetOrCreateProjectAsync(project, projectContext);
-
-                var packageManagementFormat = new PackageManagementFormat(_settings);
-                // 1 means PackageReference
-                var preferPackageReference = packageManagementFormat.SelectedPackageManagementFormat == 1;
-
-                // Check if default package format is set to `PackageReference` and project has no
-                // package installed yet then upgrade it to `PackageReference` based project.
-                if(preferPackageReference &&
-                   (nuGetProject is MSBuildNuGetProject) &&
-                   !(await nuGetProject.GetInstalledPackagesAsync(token)).Any() &&
-                   await NuGetProjectUpgradeUtility.IsNuGetProjectUpgradeableAsync(nuGetProject, project, needsAPackagesConfig: false))
-                {
-                    nuGetProject = await _solutionManager.UpgradeProjectToPackageReferenceAsync(nuGetProject);
-                }
-
-                // install the package
-                foreach (var package in packages)
-                {
-                    // Check if the package is already installed
-                    if (package.Version != null &&
-                        _packageServices.IsPackageInstalledEx(project, package.Id, package.Version.ToString()))
-                    {
-                            continue;
-                    }
-
-                    // Perform the install
-                    await InstallInternalCoreAsync(
-                        packageManager,
-                        gatherCache,
-                        nuGetProject,
-                        package,
-                        sources,
-                        projectContext,
-                        includePrerelease,
-                        ignoreDependencies,
-                        token);
-                }
-            
-        }
-
-        internal async Task InstallInternalCoreAsync(
-            NuGetPackageManager packageManager,
-            GatherCache gatherCache,
-            NuGetProject nuGetProject,
-            PackageIdentity package,
-            IEnumerable<SourceRepository> sources,
-            ProjectContext projectContext,
-            bool includePrerelease,
-            bool ignoreDependencies,
-            CancellationToken token)
-        {
-            var depBehavior = ignoreDependencies ? DependencyBehavior.Ignore : DependencyBehavior.Lowest;
-
-            using (var sourceCacheContext = new SourceCacheContext())
+                var nuGetPackage = ((PackageDetails) package).Package;
+                walker.ResolveOperations(nuGetPackage);
+                _packageManager.UninstallPackage(nuGetPackage, false, true);
+            }
+            catch (Exception exception)
             {
-                var resolution = new ResolutionContext(
-                    depBehavior,
-                    includePrerelease,
-                    includeUnlisted: false,
-                    versionConstraints: VersionConstraints.None,
-                    gatherCache: gatherCache,
-                    sourceCacheContext: sourceCacheContext);
-
-                // install the package
-                if (package.Version == null)
-                {
-                    await packageManager.InstallPackageAsync(nuGetProject, package.Id, resolution, projectContext, sources, Enumerable.Empty<SourceRepository>(), token);
-                }
-                else
-                {
-                    await packageManager.InstallPackageAsync(nuGetProject, package, resolution, projectContext, sources, Enumerable.Empty<SourceRepository>(), token);
-                }
+                _logger.Log(MessageLevel.Error, exception.Message);
+                _packageOperationContextService.CurrentContext.CatchedExceptions.Add(exception);
             }
         }
 
-        public void UpdatePackages(IPackage package, bool allowedPrerelease)
+        public void InstallPackage(IPackageDetails package, bool allowedPrerelease)
         {
             Argument.IsNotNull(() => package);
-            Argument.IsOfType(() => package, typeof(Package));
+            Argument.IsOfType(() => package, typeof (PackageDetails));
+
+            var repository = _packageOperationContextService.CurrentContext.Repository;
+            var sourceRepository = _repositoryCacheService.GetNuGetRepository(repository);
+
+            var walker = new InstallWalker(_localRepository, sourceRepository, null, _logger, false, allowedPrerelease, DependencyVersion);
 
             try
             {
                 ValidatePackage(package);
-                var nuGetPackage = EnsurePackageDependencies(((Package)package).SearchMetadata);
+                var nuGetPackage = EnsurePackageDependencies(((PackageDetails)package).Package);
+                walker.ResolveOperations(nuGetPackage);
+                _packageManager.InstallPackage(nuGetPackage, false, allowedPrerelease, false);
+            }
+            catch (Exception exception)
+            {
+                _logger.Log(MessageLevel.Error, exception.Message);
+                _packageOperationContextService.CurrentContext.CatchedExceptions.Add(exception);
+            }
+        }
+
+        public void UpdatePackages(IPackageDetails package, bool allowedPrerelease)
+        {
+            Argument.IsNotNull(() => package);
+            Argument.IsOfType(() => package, typeof(PackageDetails));
+
+            try
+            {
+                ValidatePackage(package);
+                var nuGetPackage = EnsurePackageDependencies(((PackageDetails)package).Package);
                 _packageManager.UpdatePackage(nuGetPackage, true, allowedPrerelease);
             }
             catch (Exception exception)
@@ -263,7 +117,7 @@ namespace Orc.NuGetExplorer
             }
         }
 
-        private void ValidatePackage(IPackage package)
+        private void ValidatePackage(IPackageDetails package)
         {
             package.ResetValidationContext();
 
@@ -275,7 +129,7 @@ namespace Orc.NuGetExplorer
             }
         }
 
-        private PackageWrapper EnsurePackageDependencies(Package nuGetPackage)
+        private PackageWrapper EnsurePackageDependencies(IPackage nuGetPackage)
         {
             List<PackageDependencySet> dependencySets = new List<PackageDependencySet>();
             foreach (PackageDependencySet dependencySet in nuGetPackage.DependencySets)

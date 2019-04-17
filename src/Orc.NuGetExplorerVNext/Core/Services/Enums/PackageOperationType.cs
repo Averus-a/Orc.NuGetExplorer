@@ -1,15 +1,16 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="INuGetProjectProvider.cs" company="WildGums">
-//   Copyright (c) 2008 - 2019 WildGums. All rights reserved.
+// <copyright file="PackageOperationType.cs" company="WildGums">
+//   Copyright (c) 2008 - 2015 WildGums. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+
 namespace Orc.NuGetExplorer
 {
-    using NuGet.ProjectManagement;
-
-    public interface INuGetProjectProvider
+    public enum PackageOperationType
     {
-        NuGetProject GetProject();
+        Install,
+        Uninstall,
+        Update
     }
 }

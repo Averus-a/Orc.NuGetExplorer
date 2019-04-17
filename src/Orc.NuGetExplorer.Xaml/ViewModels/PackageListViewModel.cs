@@ -19,8 +19,8 @@ namespace Orc.NuGetExplorer.ViewModels
         #endregion
 
         #region Properties
-        public ObservableCollection<IPackage> ItemsSource { get; set; }
-        public IPackage SelectedPackage { get; set; }
+        public ObservableCollection<IPackageDetails> ItemsSource { get; set; }
+        public IPackageDetails SelectedPackage { get; set; }
         #endregion
     }
 }

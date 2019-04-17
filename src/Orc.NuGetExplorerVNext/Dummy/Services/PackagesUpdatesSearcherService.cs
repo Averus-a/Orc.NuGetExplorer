@@ -1,18 +1,18 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="NuGetProjectProvider.cs" company="WildGums">
+// <copyright file="PackagesUpdatesSearcherService.cs" company="WildGums">
 //   Copyright (c) 2008 - 2019 WildGums. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Orc.NuGetExplorer
 {
-    using NuGet.ProjectManagement;
+    using System.Collections.Generic;
 
-    public class NuGetProjectProvider : INuGetProjectProvider
+    public class PackagesUpdatesSearcherService : IPackagesUpdatesSearcherService
     {
-        public NuGetProject GetProject()
+        public IEnumerable<IPackageDetails> SearchForUpdates(bool? allowPrerelease = null, bool authenticateIfRequired = true)
         {
-            return new FolderNuGetProject(_packageFolderPath)
+            throw new System.NotImplementedException();
         }
     }
 }

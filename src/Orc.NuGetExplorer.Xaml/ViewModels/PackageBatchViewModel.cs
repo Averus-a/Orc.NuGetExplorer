@@ -7,11 +7,14 @@
 
 namespace Orc.NuGetExplorer.ViewModels
 {
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using Catel;
     using Catel.Fody;
     using Catel.MVVM;
+    using Catel.Threading;
 
     internal class PackageBatchViewModel : ViewModelBase
     {
@@ -36,19 +39,19 @@ namespace Orc.NuGetExplorer.ViewModels
             ActionName = _packageCommandService.GetActionName(packagesBatch.OperationType);
             PluralActionName = _packageCommandService.GetPluralActionName(packagesBatch.OperationType);
 
-            PackageAction = new Command(OnPackageActionExecute, OnPackageActionCanExecute);
-            ApplyAll = new Command(OnApplyAllExecute, OnApplyAllCanExecute);
+            PackageAction = new TaskCommand(OnPackageActionExecuteAsync, OnPackageActionCanExecute);
+            ApplyAll = new TaskCommand(OnApplyAllExecuteAsync, OnApplyAllCanExecute);
         }
         #endregion
 
         #region Properties
         [Model]
-        [Expose("PackageList")]
+        [Expose(nameof(NuGetExplorer.PackagesBatch.PackageList))]
         public PackagesBatch PackagesBatch { get; set; }
 
         public string ActionName { get; private set; }
         public string PluralActionName { get; private set; }
-        public IPackage SelectedPackage { get; set; }
+        public IPackageDetails SelectedPackage { get; set; }
         #endregion
 
         #region Methods
@@ -56,7 +59,7 @@ namespace Orc.NuGetExplorer.ViewModels
         {
             await base.InitializeAsync();
 
-            RefreshCanExecute();
+            await RefreshCanExecuteAsync();
 
             SetTitle();
         }
@@ -81,47 +84,96 @@ namespace Orc.NuGetExplorer.ViewModels
         #endregion
 
         #region Commands
-        public Command ApplyAll { get; private set; }
+        public TaskCommand ApplyAll { get; private set; }
 
-        private void OnApplyAllExecute()
+        private async Task OnApplyAllExecuteAsync()
         {
-            var packages = PackagesBatch.PackageList.Where(p => _packageCommandService.CanExecute(PackagesBatch.OperationType, p)).ToArray();
+            if (!await OnApplyAllCanExecuteAsync())
+            {
+                return;
+            }
+
+            var packages = await GetPackagesForOperationAsync(PackagesBatch.PackageList);
             using (_packageOperationContextService.UseOperationContext(PackagesBatch.OperationType, packages))
             {
                 foreach (var package in packages)
                 {
-                    _packageCommandService.Execute(PackagesBatch.OperationType, package);
+                    await _packageCommandService.ExecuteAsync(PackagesBatch.OperationType, package);
 
-                    RefreshCanExecute();
+                    await RefreshCanExecuteAsync();
                 }
             }
         }
 
-        private bool OnApplyAllCanExecute()
+        private async Task<IPackageDetails[]> GetPackagesForOperationAsync(IReadOnlyList<IPackageDetails> packageDetailsList)
         {
-            return PackagesBatch.PackageList.All(p => _packageCommandService.CanExecute(PackagesBatch.OperationType, p));
+            var result = new List<IPackageDetails>(packageDetailsList.Count);
+
+            foreach (var packageDetails in packageDetailsList)
+            {
+                if (!await _packageCommandService.CanExecuteAsync(PackagesBatch.OperationType, packageDetails))
+                {
+                    continue;
+                }
+
+                result.Add(packageDetails);
+            }
+
+            return result.ToArray();
         }
 
-        public Command PackageAction { get; set; }
-
-        private void OnPackageActionExecute()
+        private async Task<bool> OnApplyAllCanExecuteAsync()
         {
-            _packageCommandService.Execute(PackagesBatch.OperationType, SelectedPackage);
+            foreach (var packageDetails in PackagesBatch.PackageList)
+            {
+                if (!await _packageCommandService.CanExecuteAsync(PackagesBatch.OperationType, packageDetails))
+                {
+                    return false;
+                }
+            }
 
-            RefreshCanExecute();
+            return true;
+        }
+
+        private bool OnApplyAllCanExecute()
+        {
+            var canExecuteAsync = (Func<Task<bool>>)OnApplyAllCanExecuteAsync;
+
+            return canExecuteAsync.ExtractBooleanResult(true, false, 100);
+        }
+
+        public TaskCommand PackageAction { get; set; }
+
+        private async Task OnPackageActionExecuteAsync()
+        {
+            if (!await OnPackageActionCanExecuteAsync())
+            {
+                return;
+            }
+
+            await _packageCommandService.ExecuteAsync(PackagesBatch.OperationType, SelectedPackage);
+
+            await RefreshCanExecuteAsync();
+        }
+
+        private Task<bool> OnPackageActionCanExecuteAsync()
+        {
+            return _packageCommandService.CanExecuteAsync(PackagesBatch.OperationType, SelectedPackage);
         }
 
         private bool OnPackageActionCanExecute()
         {
-            return _packageCommandService.CanExecute(PackagesBatch.OperationType, SelectedPackage);
+            var canExecuteAsync = (Func<Task<bool>>)OnPackageActionCanExecuteAsync;
+
+            return canExecuteAsync.ExtractBooleanResult(true, false, 100);
         }
 
-        private void RefreshCanExecute()
+        private async Task RefreshCanExecuteAsync()
         {
             foreach (var package in PackagesBatch.PackageList)
             {
                 package.IsInstalled = null;
-                _packageCommandService.CanExecute(PackagesBatch.OperationType, package);
+                await _packageCommandService.CanExecuteAsync(PackagesBatch.OperationType, package);
             }
         }
         #endregion

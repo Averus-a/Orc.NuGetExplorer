@@ -9,6 +9,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
 {
     using System.Collections.ObjectModel;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Catel;
     using Catel.Fody;
@@ -52,10 +53,10 @@ namespace Orc.NuGetExplorer.Example.ViewModels
 
             Echo = echoService.GetPackageManagementEcho();
 
-            AvailableUpdates = new ObservableCollection<IPackage>();
+            AvailableUpdates = new ObservableCollection<IPackageDetails>();
 
             ShowExplorer = new TaskCommand(OnShowExplorerExecuteAsync);
-            AdddPackageSource = new TaskCommand(OnAdddPackageSourceExecute, OnAdddPackageSourceCanExecute);
+            AddPackageSource = new TaskCommand(OnAddPackageSourceExecute, OnAddPackageSourceCanExecute);
             VerifyFeed = new TaskCommand(OnVerifyFeedExecute, OnVerifyFeedCanExecute);
             CheckForUpdates = new TaskCommand(OnCheckForUpdatesExecute);
             OpenUpdateWindow = new TaskCommand(OnOpenUpdateWindowExecute, OnOpenUpdateWindowCanExecute);
@@ -67,13 +68,13 @@ namespace Orc.NuGetExplorer.Example.ViewModels
 
         #region Properties
         [Model]
-        [Expose("Lines")]
+        [Expose(nameof(PackageManagementEcho.Lines))]
         public PackageManagementEcho Echo { get; private set; }
 
         public bool? AllowPrerelease { get; set; }
         public string PackageSourceName { get; set; }
         public string PackageSourceUrl { get; set; }
-        public ObservableCollection<IPackage> AvailableUpdates { get; private set; }
+        public ObservableCollection<IPackageDetails> AvailableUpdates { get; private set; }
         #endregion
 
         #region Commands
@@ -105,12 +106,12 @@ namespace Orc.NuGetExplorer.Example.ViewModels
             var packages = await TaskHelper.Run(() => _packagesUpdatesSearcherService.SearchForUpdates(AllowPrerelease, false), true);
 
             // Note: AddRange doesn't refresh button state
-            AvailableUpdates = new ObservableCollection<IPackage>(packages);
+            AvailableUpdates = new ObservableCollection<IPackageDetails>(packages);
         }
 
-        public TaskCommand AdddPackageSource { get; private set; }
+        public TaskCommand AddPackageSource { get; private set; }
 
-        private async Task OnAdddPackageSourceExecute()
+        private async Task OnAddPackageSourceExecute()
         {
             var packageSourceSaved = await TaskHelper.Run(() => _nuGetConfigurationService.SavePackageSource(PackageSourceName, PackageSourceUrl, verifyFeed: true), true);
             if (!packageSourceSaved)
@@ -119,7 +120,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
             }
         }
 
-        private bool OnAdddPackageSourceCanExecute()
+        private bool OnAddPackageSourceCanExecute()
         {
             return !string.IsNullOrWhiteSpace(PackageSourceName) && !string.IsNullOrWhiteSpace(PackageSourceUrl);
         }
@@ -128,7 +129,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
 
         private async Task OnVerifyFeedExecute()
         {
-            await TaskHelper.Run(() => _feedVerificationService.VerifyFeed(PackageSourceUrl), true);
+            await _feedVerificationService.VerifyFeedAsync(PackageSourceUrl, true, CancellationToken.None);
         }
 
         private bool OnVerifyFeedCanExecute()

@@ -7,12 +7,13 @@
 
 namespace Orc.NuGetExplorer
 {
+    using System.Threading.Tasks;
     using System.Windows.Documents;
 
     internal interface IPackageDetailsService
     {
         #region Methods
-        FlowDocument PackageToFlowDocument(IPackage package);
+        Task<FlowDocument> PackageToFlowDocumentAsync(IPackageDetails package);
         #endregion
     }
 }

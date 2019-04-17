@@ -11,6 +11,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
     using System.Threading.Tasks;
     using Catel;
     using Catel.MVVM;
+    using NuGet.Configuration;
 
     public class SettingsViewModel : ViewModelBase
     {
@@ -30,7 +31,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
         #endregion
 
         #region Properties
-        public IEnumerable<IPackageSource> PackageSources { get; set; }
+        public IEnumerable<PackageSource> PackageSources { get; set; }
         #endregion
 
         #region Methods

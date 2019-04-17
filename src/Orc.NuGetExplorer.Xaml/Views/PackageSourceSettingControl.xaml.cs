@@ -11,6 +11,7 @@ namespace Orc.NuGetExplorer.Views
     using System.Linq;
     using System.Windows;
     using Catel.MVVM.Views;
+    using NuGet.Configuration;
 
     public sealed partial class PackageSourceSettingControl
     {
@@ -52,12 +53,12 @@ namespace Orc.NuGetExplorer.Views
         }
 
         public static readonly DependencyProperty PackageSourcesProperty =
-            DependencyProperty.Register("PackageSources", typeof(IEnumerable<IPackageSource>), typeof(PackageSourceSettingControl), new PropertyMetadata(Enumerable.Empty<IPackageSource>()));
+            DependencyProperty.Register("PackageSources", typeof(IEnumerable<PackageSource>), typeof(PackageSourceSettingControl), new PropertyMetadata(Enumerable.Empty<PackageSource>()));
 
         [ViewToViewModel(MappingType = ViewToViewModelMappingType.TwoWayViewWins)]
-        public IEnumerable<IPackageSource> PackageSources
+        public IEnumerable<PackageSource> PackageSources
         {
-            get { return (IEnumerable<IPackageSource>)GetValue(PackageSourcesProperty); }
+            get { return (IEnumerable<PackageSource>)GetValue(PackageSourcesProperty); }
             set { SetValue(PackageSourcesProperty, value); }
         }
         #endregion

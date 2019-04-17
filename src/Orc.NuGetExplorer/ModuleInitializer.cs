@@ -1,11 +1,9 @@
-﻿using System.Net.Http;
-using Catel.IoC;
+﻿using Catel.IoC;
 using Catel.Services;
 using Orc.NuGetExplorer;
 using NuGet;
-using NuGet.Common;
-using NuGet.Configuration;
-using NuGet.Credentials;
+using IPackageManager = Orc.NuGetExplorer.IPackageManager;
+using PackageManager = Orc.NuGetExplorer.PackageManager;
 
 /// <summary>
 /// Used by the ModuleInit. All code inside the Initialize method is ran as soon as the assembly is loaded.
@@ -39,10 +37,13 @@ public static class ModuleInitializer
 
         serviceLocator.RegisterType<ILogger, NuGetLogger>();
 
+        serviceLocator.RegisterType<IPackageManager, PackageManager>();
+
+        serviceLocator.RegisterInstance<IPackageRepositoryFactory>(PackageRepositoryFactory.Default);
+
         serviceLocator.RegisterType<IAuthenticationProvider, AuthenticationProvider>();
         serviceLocator.RegisterType<IPackageSourceProvider, NuGetPackageSourceProvider>();
         serviceLocator.RegisterType<ICredentialProvider, CredentialProvider>();
-        serviceLocator.RegisterType<INuGetProjectProvider, NuGetProjectProvider>();
         serviceLocator.RegisterType<IDefaultPackageSourcesProvider, EmptyDefaultPackageSourcesProvider>();
 
         serviceLocator.RegisterType<ISettings, NuGetSettings>();

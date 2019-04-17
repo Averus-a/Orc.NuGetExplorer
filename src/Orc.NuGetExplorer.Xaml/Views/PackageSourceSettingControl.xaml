@@ -6,7 +6,7 @@
                    xmlns:catel="http://schemas.catelproject.com"
                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
                    xmlns:orccontrols="http://schemas.wildgums.com/orc/controls"
-                   xmlns:nuGetExplorer="clr-namespace:Orc.NuGetExplorer;assembly=Orc.NuGetExplorer"
+                   xmlns:nuGetExplorer1="clr-namespace:Orc.NuGetExplorer;assembly=Orc.NuGetExplorerVNext"
                    mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400">
 
     <catel:UserControl.Resources>
@@ -58,7 +58,7 @@
                                     <Setter Property="Visibility" TargetName="errorViewBox" Value="Visible" />
                                 </DataTrigger>
                                 
-                                <DataTrigger Binding="{Binding FeedVerificationResult}" Value="{x:Static nuGetExplorer:FeedVerificationResult.AuthenticationRequired}">
+                                <DataTrigger Binding="{Binding FeedVerificationResult}" Value="{x:Static nuGetExplorer1:FeedVerificationResult.AuthenticationRequired}">
                                     <Setter Property="BorderBrush" Value="Orange" />
                                     <Setter Property="Visibility" TargetName="LoadingGif" Value="Hidden" />
                                     <Setter Property="Visibility" TargetName="warningViewBox" Value="Visible" />

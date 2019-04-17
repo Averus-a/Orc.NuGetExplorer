@@ -34,9 +34,9 @@ namespace Orc.NuGetExplorer.ViewModels
 
         #region Properties
         [Model]
-        [Expose("RepositoryCategories")]
-        [Expose("SelectedRepository")]
-        [Expose("SelectedRepositoryCategory")]
+        [Expose(nameof(RepositoryNavigator.RepositoryCategories))]
+        [Expose(nameof(RepositoryNavigator.SelectedRepository))]
+        [Expose(nameof(RepositoryNavigator.SelectedRepositoryCategory))]
         public RepositoryNavigator Navigator { get; private set; }
         #endregion
 
