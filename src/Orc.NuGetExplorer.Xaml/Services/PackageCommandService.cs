@@ -53,11 +53,11 @@ namespace Orc.NuGetExplorer
             return Enum.GetName(typeof(PackageOperationType), operationType);
         }
 
-        public void Execute(PackageOperationType operationType, IPackageDetails packageDetails, IRepository sourceRepository = null, bool allowedPrerelease = false)
+        public void Execute(PackageOperationType operationType, IPackage package, IRepository sourceRepository = null, bool allowedPrerelease = false)
         {
-            Argument.IsNotNull(() => packageDetails);
+            Argument.IsNotNull(() => package);
 
-            var selectedPackage = GetPackageDetailsFromSelectedVersion(packageDetails, sourceRepository ?? _localRepository) ?? packageDetails;
+            var selectedPackage = GetPackageDetailsFromSelectedVersion(package, sourceRepository ?? _localRepository) ?? package;
 
             using (_pleaseWaitService.WaitingScope())
             {
@@ -81,10 +81,10 @@ namespace Orc.NuGetExplorer
                 }
             }
 
-            packageDetails.IsInstalled = null;
+            package.IsInstalled = null;
         }
 
-        public bool CanExecute(PackageOperationType operationType, IPackageDetails package)
+        public bool CanExecute(PackageOperationType operationType, IPackage package)
         {
             if (package == null)
             {
@@ -130,17 +130,17 @@ namespace Orc.NuGetExplorer
             return $"{Enum.GetName(typeof(PackageOperationType), operationType)} all";
         }
 
-        private IPackageDetails GetPackageDetailsFromSelectedVersion(IPackageDetails packageDetails, IRepository repository)
+        private IPackage GetPackageDetailsFromSelectedVersion(IPackage package, IRepository repository)
         {
-            if (!string.IsNullOrWhiteSpace(packageDetails.SelectedVersion) && packageDetails.Version.ToString() != packageDetails.SelectedVersion)
+            if (!string.IsNullOrWhiteSpace(package.SelectedVersion) && package.Version.ToString() != package.SelectedVersion)
             {
-                packageDetails = _packageQueryService.GetPackage(repository, packageDetails.Id, packageDetails.SelectedVersion);
+                package = _packageQueryService.GetPackage(repository, package.Id, package.SelectedVersion);
             }
 
-            return packageDetails;
+            return package;
         }
 
-        private bool CanInstall(IPackageDetails package)
+        private bool CanInstall(IPackage package)
         {
             Argument.IsNotNull(() => package);
 
@@ -154,13 +154,13 @@ namespace Orc.NuGetExplorer
             return package.IsInstalled != null && !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;
         }
 
-        private void ValidatePackage(IPackageDetails package)
+        private void ValidatePackage(IPackage package)
         {
             package.ResetValidationContext();
             _apiPackageRegistry.Validate(package);
         }
 
-        private bool CanUpdate(IPackageDetails package)
+        private bool CanUpdate(IPackage package)
         {
             Argument.IsNotNull(() => package);
 

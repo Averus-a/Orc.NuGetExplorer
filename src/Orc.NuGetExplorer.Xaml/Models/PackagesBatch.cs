@@ -15,12 +15,12 @@ namespace Orc.NuGetExplorer
         #region Constructors
         public PackagesBatch()
         {
-            PackageList = new FastObservableCollection<IPackageDetails>();
+            PackageList = new FastObservableCollection<IPackage>();
         }
         #endregion
 
         #region Properties
-        public ObservableCollection<IPackageDetails> PackageList { get; set; }
+        public ObservableCollection<IPackage> PackageList { get; set; }
         public PackageOperationType OperationType { get; set; }
         #endregion
     }

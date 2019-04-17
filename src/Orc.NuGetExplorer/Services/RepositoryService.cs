@@ -13,6 +13,7 @@ namespace Orc.NuGetExplorer
     using Catel;
     using Catel.IoC;
     using NuGet;
+    using NuGet.Protocol.Core.Types;
 
     internal class RepositoryService : IRepositoryService
     {
@@ -44,7 +45,7 @@ namespace Orc.NuGetExplorer
 
         #region Properties
         public IRepository LocalRepository { get; private set; }
-        private IPackageRepository LocalNuGetRepository { get; set; }
+        private SourceRepository LocalNuGetRepository { get; set; }
         #endregion
 
         #region Methods

@@ -10,9 +10,9 @@ namespace Orc.NuGetExplorer
     public interface IPackageOperationService
     {
         #region Methods
-        void UninstallPackage(IPackageDetails package);
-        void InstallPackage(IPackageDetails package, bool allowedPrerelease);
-        void UpdatePackages(IPackageDetails package, bool allowedPrerelease);
+        void UninstallPackage(IPackage package, bool removeDependencies);
+        void InstallPackage(IPackage package, bool allowedPrerelease);
+        void UpdatePackages(IPackage package, bool allowedPrerelease);
         #endregion
     }
 }

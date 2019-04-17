@@ -9,13 +9,14 @@ namespace Orc.NuGetExplorer
 {
     using NuGet;
     using NuGet.Packaging.Core;
+    using NuGet.Protocol.Core.Types;
 
     internal static class IPackageDetailsExtensions
     {
         #region Methods
-        public static PackageIdentity ToNuGetPackage(this IPackageDetails package)
+        public static IPackageSearchMetadata ToNuGetPackage(this IPackage package)
         {
-            return ((PackageDetails) package).Package;
+            return ((Package) package).SearchMetadata;
         }
         #endregion
     }

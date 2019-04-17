@@ -8,11 +8,13 @@
 namespace Orc.NuGetExplorer
 {
     using NuGet;
+    using NuGet.Packaging.Core;
+    using NuGet.Protocol.Core.Types;
 
     internal interface IPackageCacheService
     {
         #region Methods
-        PackageDetails GetPackageDetails(IPackageRepository packageRepository, IPackage package, bool allowPrereleaseVersions);
+        Package GetPackageDetails(SourceRepository packageRepository, Package package, bool allowPrereleaseVersions);
         #endregion
     }
 }

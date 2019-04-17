@@ -12,7 +12,7 @@ namespace Orc.NuGetExplorer
     internal interface IPackageDetailsService
     {
         #region Methods
-        FlowDocument PackageToFlowDocument(IPackageDetails package);
+        FlowDocument PackageToFlowDocument(IPackage package);
         #endregion
     }
 }

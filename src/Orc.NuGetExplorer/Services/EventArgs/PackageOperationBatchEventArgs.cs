@@ -13,7 +13,7 @@ namespace Orc.NuGetExplorer
     public class PackageOperationBatchEventArgs : CancelEventArgs
     {
         #region Constructors
-        internal PackageOperationBatchEventArgs(PackageOperationType operationType, params IPackageDetails[] packages)
+        internal PackageOperationBatchEventArgs(PackageOperationType operationType, params IPackage[] packages)
         {
             Argument.IsNotNullOrEmptyArray(() => packages);
 
@@ -23,7 +23,7 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Properties
-        public IPackageDetails[] Packages { get; private set; }
+        public IPackage[] Packages { get; private set; }
         public PackageOperationType OperationType { get; private set; }
         #endregion
     }

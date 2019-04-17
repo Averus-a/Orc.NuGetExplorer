@@ -31,29 +31,29 @@ namespace Orc.NuGetExplorer.Views
         {
             InitializeComponent();
 
-            ItemsSource = new ObservableCollection<IPackageDetails>();
+            ItemsSource = new ObservableCollection<IPackage>();
         }
         #endregion
 
         #region Properties
         [ViewToViewModel(MappingType = ViewToViewModelMappingType.ViewToViewModel)]
-        public ObservableCollection<IPackageDetails> ItemsSource
+        public ObservableCollection<IPackage> ItemsSource
         {
-            get { return (ObservableCollection<IPackageDetails>) GetValue(ItemsSourceProperty); }
+            get { return (ObservableCollection<IPackage>) GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
 
-        public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource", typeof(ObservableCollection<IPackageDetails>),
+        public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource", typeof(ObservableCollection<IPackage>),
             typeof(PackageListView), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));        
 
         [ViewToViewModel(MappingType = ViewToViewModelMappingType.TwoWayViewModelWins)]
-        public IPackageDetails SelectedPackage
+        public IPackage SelectedPackage
         {
-            get { return (IPackageDetails) GetValue(SelectedPackageProperty); }
+            get { return (IPackage) GetValue(SelectedPackageProperty); }
             set { SetValue(SelectedPackageProperty, value); }
         }
 
-        public static readonly DependencyProperty SelectedPackageProperty = DependencyProperty.Register("SelectedPackage", typeof(IPackageDetails),
+        public static readonly DependencyProperty SelectedPackageProperty = DependencyProperty.Register("SelectedPackage", typeof(IPackage),
             typeof(PackageListView), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
         
 

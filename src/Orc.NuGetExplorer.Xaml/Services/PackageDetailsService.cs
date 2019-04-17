@@ -30,7 +30,7 @@ namespace Orc.NuGetExplorer
         }
 
         #region Methods
-        public FlowDocument PackageToFlowDocument(IPackageDetails package)
+        public FlowDocument PackageToFlowDocument(IPackage package)
         {
             Argument.IsNotNull(() => package);
 
@@ -85,7 +85,7 @@ namespace Orc.NuGetExplorer
             return result;
         }
 
-        private static string GetVersion(IPackageDetails package)
+        private static string GetVersion(IPackage package)
         {
             if (!package.IsPrerelease)
             {

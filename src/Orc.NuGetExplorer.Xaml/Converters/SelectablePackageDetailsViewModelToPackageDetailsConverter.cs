@@ -12,16 +12,16 @@ namespace Orc.NuGetExplorer.Converters
 
     using Orc.NuGetExplorer.ViewModels;
 
-    public class SelectablePackageDetailsViewModelToPackageDetailsConverter : ValueConverterBase<IPackageDetails, SelectablePackageDetailsViewModel>
+    public class SelectablePackageDetailsViewModelToPackageDetailsConverter : ValueConverterBase<IPackage, SelectablePackageDetailsViewModel>
     {
-        protected override object Convert(IPackageDetails value, Type targetType, object parameter)
+        protected override object Convert(IPackage value, Type targetType, object parameter)
         {
             return null;
         }
 
         protected override object ConvertBack(SelectablePackageDetailsViewModel value, Type targetType, object parameter)
         {
-            return value.PackageDetails;
+            return value.Package;
         }
     }
 }

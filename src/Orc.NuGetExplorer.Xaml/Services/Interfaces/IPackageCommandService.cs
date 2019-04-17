@@ -11,8 +11,8 @@ namespace Orc.NuGetExplorer
     {
         #region Methods
         string GetActionName(PackageOperationType operationType);
-        void Execute(PackageOperationType operationType, IPackageDetails packageDetails, IRepository sourceRepository = null, bool allowedPrerelease = false);
-        bool CanExecute(PackageOperationType operationType, IPackageDetails package);
+        void Execute(PackageOperationType operationType, IPackage package, IRepository sourceRepository = null, bool allowedPrerelease = false);
+        bool CanExecute(PackageOperationType operationType, IPackage package);
         bool IsRefreshRequired(PackageOperationType operationType);
         string GetPluralActionName(PackageOperationType operationType);
         #endregion

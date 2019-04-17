@@ -15,56 +15,56 @@ namespace Orc.NuGetExplorer.ViewModels
     public sealed class SelectablePackageDetailsViewModel : ViewModelBase
     {
         #region Fields
-        private readonly IPackageDetails _packageDetails;
+        private readonly IPackage _package;
         #endregion
 
         #region Constructors
-        public SelectablePackageDetailsViewModel(IPackageDetails packageDetails)
+        public SelectablePackageDetailsViewModel(IPackage package)
         {
-            Argument.IsNotNull(() => packageDetails);
+            Argument.IsNotNull(() => package);
 
-            _packageDetails = packageDetails;
+            _package = package;
 
             SelectPackageVersionCommand = new Command<string>(Execute);
         }
         #endregion
 
         #region Properties
-        public Uri IconUrl => _packageDetails?.IconUrl;
+        public Uri IconUrl => _package?.IconUrl;
 
-        public override string Title => _packageDetails?.Title;
+        public override string Title => _package?.Title;
 
-        public IList<string> AvailableVersions => _packageDetails?.AvailableVersions;
+        public IList<string> AvailableVersions => _package?.AvailableVersions;
 
         public ICommand SelectPackageVersionCommand { get; }
 
         public bool? IsInstalled
         {
-            get => _packageDetails?.IsInstalled;
+            get => _package?.IsInstalled;
             set
             {
-                if (_packageDetails != null)
+                if (_package != null)
                 {
-                    _packageDetails.IsInstalled = value;
+                    _package.IsInstalled = value;
                 }
             }
         }
 
-        public string Description => _packageDetails?.Description;
+        public string Description => _package?.Description;
 
         public string SelectedVersion
         {
-            get => _packageDetails?.SelectedVersion;
+            get => _package?.SelectedVersion;
             set
             {
-                if (_packageDetails != null)
+                if (_package != null)
                 {
-                    _packageDetails.SelectedVersion = value;
+                    _package.SelectedVersion = value;
                 }
             }
         }
 
-        public IPackageDetails PackageDetails => _packageDetails;
+        public IPackage Package => _package;
 
         #endregion
 

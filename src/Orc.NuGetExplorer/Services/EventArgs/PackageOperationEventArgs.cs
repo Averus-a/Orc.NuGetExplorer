@@ -13,11 +13,11 @@ namespace Orc.NuGetExplorer
     public class PackageOperationEventArgs : CancelEventArgs
     {
         #region Constructors
-        internal PackageOperationEventArgs(IPackageDetails packageDetails, string installPath, PackageOperationType packageOperationType)
+        internal PackageOperationEventArgs(IPackage package, string installPath, PackageOperationType packageOperationType)
         {
-            Argument.IsNotNull(() => packageDetails);
+            Argument.IsNotNull(() => package);
 
-            PackageDetails = packageDetails;
+            Package = package;
             InstallPath = installPath;
             PackageOperationType = packageOperationType;
         }
@@ -26,7 +26,7 @@ namespace Orc.NuGetExplorer
         #region Properties
         public string InstallPath { get; private set; }
         public PackageOperationType PackageOperationType { get; private set; }
-        public IPackageDetails PackageDetails { get; private set; }
+        public IPackage Package { get; private set; }
         #endregion
     }
 }

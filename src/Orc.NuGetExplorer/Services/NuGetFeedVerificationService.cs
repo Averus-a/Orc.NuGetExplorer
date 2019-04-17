@@ -19,18 +19,18 @@ namespace Orc.NuGetExplorer
 
     internal class NuGetFeedVerificationService : INuGetFeedVerificationService
     {
+        private readonly IRepositoryCacheService _repositoryCacheService;
+
         #region Fields
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
-
-        private readonly IPackageRepositoryFactory _packageRepositoryFactory;
         #endregion
 
         #region Constructors
-        public NuGetFeedVerificationService(IPackageRepositoryFactory packageRepositoryFactory)
+        public NuGetFeedVerificationService(IRepositoryCacheService repositoryCacheService)
         {
-            Argument.IsNotNull(() => packageRepositoryFactory);
+            Argument.IsNotNull(() => repositoryCacheService);
 
-            _packageRepositoryFactory = packageRepositoryFactory;
+            _repositoryCacheService = repositoryCacheService;
         }
         #endregion
 
@@ -46,7 +46,7 @@ namespace Orc.NuGetExplorer
             {
                 try
                 {
-                    var repository = _packageRepositoryFactory.CreateRepository(source);
+                    var repository = _repositoryCacheService.GetSerializableRepository().CreateRepository(source);
                     repository.GetPackages().Take(1).Count();
                 }
                 catch (WebException ex)

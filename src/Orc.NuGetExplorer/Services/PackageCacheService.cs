@@ -11,11 +11,12 @@ namespace Orc.NuGetExplorer
     using Catel;
     using Catel.Caching;
     using NuGet;
+    using NuGet.Protocol.Core.Types;
 
     internal class PackageCacheService : IPackageCacheService
     {
         #region Fields
-        private readonly ICacheStorage<string, PackageDetails> _packageDetailsCache = new CacheStorage<string, PackageDetails>();
+        private readonly ICacheStorage<string, Package> _packageDetailsCache = new CacheStorage<string, Package>();
         #endregion
 
         #region Constructors
@@ -25,11 +26,11 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Methods
-        public PackageDetails GetPackageDetails(IPackageRepository packageRepository, IPackage package, bool allowPrereleaseVersions)
+        public Package GetPackageDetails(SourceRepository packageRepository, Package package, bool allowPrereleaseVersions)
         {
             Argument.IsNotNull(() => package);
 
-            return _packageDetailsCache.GetFromCacheOrFetch(package.GetKeyForCache(allowPrereleaseVersions), () => new PackageDetails(package, packageRepository.FindPackagesById(package.Id).Select(p => p.Version.ToString()).Where(p => allowPrereleaseVersions || !p.Contains("-"))));
+            return _packageDetailsCache.GetFromCacheOrFetch(package.GetKeyForCache(allowPrereleaseVersions), () => new Package(package, packageRepository.FindPackagesById(package.Id).Select(p => p.Version.ToString()).Where(p => allowPrereleaseVersions || !p.Contains("-"))));
         }
         #endregion
     }

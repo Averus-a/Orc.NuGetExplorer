@@ -8,6 +8,7 @@
 namespace Orc.NuGetExplorer
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Catel;
     using Catel.Configuration;
@@ -43,11 +44,18 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Methods
-        public async Task<AuthenticationCredentials> GetCredentialsAsync(Uri uri, bool previousCredentialsFailed)
+        public async Task<AuthenticationCredentials> GetCredentialsAsync(Uri uri, bool previousCredentialsFailed, CancellationToken cancellationToken)
         {
             Log.Debug("Requesting credentials for '{0}'", uri);
 
             bool? result = null;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                return null;
+            }
 
             var credentials = new AuthenticationCredentials(uri);
 
@@ -57,7 +65,8 @@ namespace Orc.NuGetExplorer
                 {
                     var uriString = uri.ToString().ToLower();
 
-                    using (var scopeManager = ScopeManager<AuthenticationScope>.GetScopeManager(uriString.GetSafeScopeName(), () => new AuthenticationScope()))
+                    using (var scopeManager = ScopeManager<AuthenticationScope>.GetScopeManager(uriString.GetSafeScopeName(), 
+                        () => new AuthenticationScope()))
                     {
                         var authenticationScope = scopeManager.ScopeObject;
 
@@ -70,7 +79,7 @@ namespace Orc.NuGetExplorer
                             ShowSaveCheckBox = true,
                             WindowTitle = "Credentials required",
                             MainInstruction = "Credentials are required to access this feed",
-                            Content = string.Format("In order to continue, please enter the credentials for {0} below.", uri),
+                            Content = $"In order to continue, please enter the credentials for {uri} below.",
                             IsAuthenticationRequired = authenticationScope.CanPromptForAuthentication
                         };
 
@@ -92,12 +101,12 @@ namespace Orc.NuGetExplorer
 
             if (result ?? false)
             {
-                Log.Debug("Successfully requested credentials for '{0}' using user '{1}'", uri, credentials.UserName);
+                Log.Debug($"Successfully requested credentials for '{uri}' using user '{credentials.UserName}'");
 
                 return credentials;
             }
 
-            Log.Debug("Failed to request credentials for '{0}'", uri);
+            Log.Debug($"Failed to request credentials for '{uri}'");
 
             return null;
         }

@@ -12,7 +12,7 @@ namespace Orc.NuGetExplorer
     public interface IPackagesUpdatesSearcherService
     {
         #region Methods
-        IEnumerable<IPackageDetails> SearchForUpdates(bool? allowPrerelease = null, bool authenticateIfRequired = true);
+        IEnumerable<IPackage> SearchForUpdates(bool? allowPrerelease = null, bool authenticateIfRequired = true);
         #endregion
     }
 }

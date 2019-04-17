@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IPackageDetails.cs" company="WildGums">
+// <copyright file="IPackage.cs" company="WildGums">
 //   Copyright (c) 2008 - 2015 WildGums. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,8 +11,10 @@ namespace Orc.NuGetExplorer
     using System.Collections.Generic;
 
     using Catel.Data;
+    using Nito.AsyncEx;
+    using NuGet.Protocol.Core.Types;
 
-    public interface IPackageDetails
+    public interface IPackage
     {
         #region Properties
         string Id { get; }
@@ -25,27 +27,23 @@ namespace Orc.NuGetExplorer
 
         Version Version { get; }
 
-        string SpecialVersion { get; }
-
-        bool IsAbsoluteLatestVersion { get; }
-
-        bool IsLatestVersion { get; }
+        string OriginalVersion { get; }
 
         bool IsPrerelease { get; }
 
         string Title { get; }
 
-        IEnumerable<string> Authors { get; }
+        string Authors { get; }
 
         DateTimeOffset? Published { get; }
 
-        int? DownloadCount { get; }
+        long? DownloadCount { get; }
 
-        string Dependencies { get; }
+        AsyncLazy<IReadOnlyList<SourcePackageDependencyInfo>> Dependencies { get; }
 
         bool? IsInstalled { get; set; }
 
-        IList<string> AvailableVersions { get; }
+        AsyncLazy<IReadOnlyList<VersionInfo>> AvailableVersions { get; }
 
         string SelectedVersion { get; set; }
 

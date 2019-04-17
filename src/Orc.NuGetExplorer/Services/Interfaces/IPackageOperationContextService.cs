@@ -17,7 +17,7 @@ namespace Orc.NuGetExplorer
 
         #region Methods
         event EventHandler<OperationContextEventArgs> OperationContextDisposing;
-        IDisposable UseOperationContext(PackageOperationType operationType, params IPackageDetails[] packages);
+        IDisposable UseOperationContext(PackageOperationType operationType, params IPackage[] packages);
         #endregion
     }
 }

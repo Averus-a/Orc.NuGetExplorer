@@ -15,7 +15,7 @@ namespace Orc.NuGetExplorer.Example.Converters
         #region Methods
         protected override object Convert(object value, Type targetType, object parameter)
         {
-            var packageDetails = value as IPackageDetails;
+            var packageDetails = value as IPackage;
             if (packageDetails == null)
             {
                 return null;

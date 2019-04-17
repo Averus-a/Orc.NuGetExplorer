@@ -11,16 +11,17 @@ namespace Orc.NuGetExplorer
     using System.Collections.Generic;
     using Catel;
     using NuGet;
+    using NuGet.Protocol.Core.Types;
 
     internal class RepositoryCacheService : IRepositoryCacheService
     {
         #region Fields
-        private readonly IDictionary<int, Tuple<IRepository, IPackageRepository>> _idTupleDictionary = new Dictionary<int, Tuple<IRepository, IPackageRepository>>();
+        private readonly IDictionary<int, Tuple<IRepository, SourceRepository>> _idTupleDictionary = new Dictionary<int, Tuple<IRepository, SourceRepository>>();
         private readonly IDictionary<string, int> _keyIdDictionary = new Dictionary<string, int>();
         #endregion
 
         #region Methods
-        public IRepository GetSerializableRepository(string name, string source, PackageOperationType operationType, Func<IPackageRepository> packageRepositoryFactory, bool renew = false)
+        public IRepository GetSerializableRepository(string name, string source, PackageOperationType operationType, Func<SourceRepository> packageRepositoryFactory, bool renew = false)
         {
             Argument.IsNotNullOrEmpty(() => name);
             Argument.IsNotNull(() => packageRepositoryFactory);
@@ -40,7 +41,7 @@ namespace Orc.NuGetExplorer
             return CreateSerializableRepository(id, name, source, operationType, packageRepositoryFactory);
         }
 
-        private IRepository CreateSerializableRepository(int id, string name, string source, PackageOperationType operationType, Func<IPackageRepository> packageRepositoryFactory)
+        private IRepository CreateSerializableRepository(int id, string name, string source, PackageOperationType operationType, Func<SourceRepository> packageRepositoryFactory)
         {
             Argument.IsNotNullOrEmpty(() => name);
             Argument.IsNotNullOrEmpty(() => source);
@@ -54,12 +55,12 @@ namespace Orc.NuGetExplorer
                 OperationType = operationType
             };
             
-            _idTupleDictionary[id] = new Tuple<IRepository, IPackageRepository>(repository, packageRepositoryFactory());
+            _idTupleDictionary[id] = new Tuple<IRepository, SourceRepository>(repository, packageRepositoryFactory());
 
             return repository;
         }
 
-        public IPackageRepository GetNuGetRepository(IRepository repository)
+        public SourceRepository GetNuGetRepository(IRepository repository)
         {
             Argument.IsNotNull(() => repository);
 

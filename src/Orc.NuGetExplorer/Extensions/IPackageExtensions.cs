@@ -14,18 +14,18 @@ namespace Orc.NuGetExplorer
     internal static class IPackageExtensions
     {
         #region Methods
-        public static bool IsPrerelease(this PackageIdentity package)
+        public static bool IsPrerelease(this Package package)
         {
             Argument.IsNotNull(() => package);
 
-            return package.Version.IsPrerelease;
+            return !string.IsNullOrWhiteSpace(package.Version.SpecialVersion);
         }
 
-        public static string GetKeyForCache(this PackageIdentity package, bool allowPrereleaseVersions)
+        public static string GetKeyForCache(this Package package, bool allowPrereleaseVersions)
         {
             Argument.IsNotNull(() => package);
 
-            return $"{package.GetType().Name}_{package.Version.Version}_{package.Version.Revision}";
+            return string.Format("{0}_{1}_{2}", package.GetType().Name, package.GetFullName(), allowPrereleaseVersions);
         }
         #endregion
     }

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="MSBuild.Sdk.Extras">
   <PropertyGroup>
-    <TargetFrameworks>net47</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <AssemblyName>Orc.NuGetExplorer.Example.NET</AssemblyName>
     <RootNamespace>Orc.NuGetExplorer.Example</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>

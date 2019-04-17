@@ -1,16 +1,15 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ISearchSettingsService.cs" company="WildGums">
-//   Copyright (c) 2008 - 2015 WildGums. All rights reserved.
+// <copyright file="INuGetProjectProvider.cs" company="WildGums">
+//   Copyright (c) 2008 - 2019 WildGums. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-
 namespace Orc.NuGetExplorer
 {
-    internal interface ISearchSettingsService
+    using NuGet.ProjectManagement;
+
+    public interface INuGetProjectProvider
     {
-        #region Properties
-        SearchSettings SearchSettings { get; }
-        #endregion
+        NuGetProject GetProject();
     }
 }

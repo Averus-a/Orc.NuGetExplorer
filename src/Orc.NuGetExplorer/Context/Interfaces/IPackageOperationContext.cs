@@ -9,6 +9,7 @@ namespace Orc.NuGetExplorer
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
 
     public interface IPackageOperationContext
     {
@@ -16,5 +17,6 @@ namespace Orc.NuGetExplorer
         IList<Exception> CatchedExceptions { get; }
         IPackageOperationContext Parent { get; set; }
         IRepository Repository { get; set; }
+        CancellationToken CancellationToken { get; }
     }
 }

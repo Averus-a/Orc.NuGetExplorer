@@ -24,7 +24,7 @@ namespace Orc.NuGetExplorer
         #region Properties
         public int UniqueIdentifier { get; }
         public IRepository Repository { get; set; }
-        public IPackageDetails[] Packages { get; set; }
+        public IPackage[] Packages { get; set; }
         public PackageOperationType OperationType { get; set; }
         public IPackageOperationContext Parent { get; set; }
         public IList<Exception> CatchedExceptions { get; private set; }

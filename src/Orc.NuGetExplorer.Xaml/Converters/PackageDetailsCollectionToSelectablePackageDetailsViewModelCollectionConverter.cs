@@ -15,10 +15,10 @@ namespace Orc.NuGetExplorer.Converters
     using Catel.MVVM.Converters;
     using ViewModels;
 
-    public class PackageDetailsCollectionToSelectablePackageDetailsViewModelCollectionConverter : ValueConverterBase<ObservableCollection<IPackageDetails>, ObservableCollection<SelectablePackageDetailsViewModel>>
+    public class PackageDetailsCollectionToSelectablePackageDetailsViewModelCollectionConverter : ValueConverterBase<ObservableCollection<IPackage>, ObservableCollection<SelectablePackageDetailsViewModel>>
     {
         #region Methods
-        protected override object Convert(ObservableCollection<IPackageDetails> value, Type targetType, object parameter)
+        protected override object Convert(ObservableCollection<IPackage> value, Type targetType, object parameter)
         {
             if (value is null)
             {
@@ -38,7 +38,7 @@ namespace Orc.NuGetExplorer.Converters
                         break;
 
                     case NotifyCollectionChangedAction.Add:
-                        foreach (IPackageDetails newItem in args.NewItems)
+                        foreach (IPackage newItem in args.NewItems)
                         {
                             selectablePackageDetailsViewModelCollection.Add(new SelectablePackageDetailsViewModel(newItem));
                         }

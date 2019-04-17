@@ -7,10 +7,12 @@
 
 namespace Orc.NuGetExplorer
 {
+    using System.Threading.Tasks;
     using Catel;
-    using NuGet;
+    using Catel.Threading;
+    using NuGet.Common;
 
-    internal class NuGetLogger : ILogger
+    internal class NuGetLogger : LoggerBase
     {
         #region Fields
         private readonly INuGetLogListeningSevice _logListeningService;
@@ -24,33 +26,37 @@ namespace Orc.NuGetExplorer
             _logListeningService = logListeningService;
         }
         #endregion
-
+        
         #region Methods
-        public FileConflictResolution ResolveFileConflict(string message)
+        public override void Log(ILogMessage message)
         {
-            return FileConflictResolution.IgnoreAll;
-        }
-
-        public void Log(MessageLevel level, string message, params object[] args)
-        {
-            switch (level)
+            switch (message.Level)
             {
-                case MessageLevel.Debug:
-                    _logListeningService.SendDebug(string.Format(message, args));
+                case LogLevel.Debug:
+                    _logListeningService.SendDebug(message.Message);
                     break;
 
-                case MessageLevel.Info:
-                    _logListeningService.SendInfo(string.Format(message, args));
+                case LogLevel.Information:
+                case LogLevel.Verbose:
+                case LogLevel.Minimal:
+                    _logListeningService.SendInfo(message.Message);
                     break;
 
-                case MessageLevel.Error:
-                    _logListeningService.SendError(string.Format(message, args));
+                case LogLevel.Error:
+                    _logListeningService.SendError(message.Message);
                     break;
 
-                case MessageLevel.Warning:
-                    _logListeningService.SendWarning(string.Format(message, args));
+                case LogLevel.Warning:
+                    _logListeningService.SendWarning(message.Message);
                     break;
             }
+        }
+
+        public override Task LogAsync(ILogMessage message)
+        {
+            Log(message);
+
+            return TaskHelper.Completed;
         }
         #endregion
     }

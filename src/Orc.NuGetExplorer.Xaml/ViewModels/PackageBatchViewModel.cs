@@ -48,7 +48,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         public string ActionName { get; private set; }
         public string PluralActionName { get; private set; }
-        public IPackageDetails SelectedPackage { get; set; }
+        public IPackage SelectedPackage { get; set; }
         #endregion
 
         #region Methods

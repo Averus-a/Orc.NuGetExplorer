@@ -21,7 +21,7 @@ namespace Orc.NuGetExplorer
             #region Fields
             // Note: should have been NuGet.DestinationFolder string and the member should have been DestinationFolder. We cannot
             // change this because we already took a dependency on this, but next time please follow the naming conventions so we
-            // know to what extension / Orc.* package a setting belongs to
+            // know to what extension / Orc.* searchMetadata a setting belongs to
             public const string DestinationFolder = "DestFolder";
 
             public const string PackageSources = "PackageSources";

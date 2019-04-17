@@ -52,7 +52,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
 
             Echo = echoService.GetPackageManagementEcho();
 
-            AvailableUpdates = new ObservableCollection<IPackageDetails>();
+            AvailableUpdates = new ObservableCollection<IPackage>();
 
             ShowExplorer = new TaskCommand(OnShowExplorerExecuteAsync);
             AdddPackageSource = new TaskCommand(OnAdddPackageSourceExecute, OnAdddPackageSourceCanExecute);
@@ -73,7 +73,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
         public bool? AllowPrerelease { get; set; }
         public string PackageSourceName { get; set; }
         public string PackageSourceUrl { get; set; }
-        public ObservableCollection<IPackageDetails> AvailableUpdates { get; private set; }
+        public ObservableCollection<IPackage> AvailableUpdates { get; private set; }
         #endregion
 
         #region Commands
@@ -105,7 +105,7 @@ namespace Orc.NuGetExplorer.Example.ViewModels
             var packages = await TaskHelper.Run(() => _packagesUpdatesSearcherService.SearchForUpdates(AllowPrerelease, false), true);
 
             // Note: AddRange doesn't refresh button state
-            AvailableUpdates = new ObservableCollection<IPackageDetails>(packages);
+            AvailableUpdates = new ObservableCollection<IPackage>(packages);
         }
 
         public TaskCommand AdddPackageSource { get; private set; }

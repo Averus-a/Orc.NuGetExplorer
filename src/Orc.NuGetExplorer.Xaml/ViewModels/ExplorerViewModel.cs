@@ -72,11 +72,11 @@ namespace Orc.NuGetExplorer.ViewModels
             _configurationService = configurationService;
 
             SearchSettings = searchSettingsService.SearchSettings;
-            SearchResult = searchResultService.SearchResult;
+            ExplorerModel = new ExplorerModel();
 
-            AvailableUpdates = new ObservableCollection<IPackageDetails>();
+            AvailableUpdates = new ObservableCollection<IPackage>();
 
-            PackageAction = new TaskCommand<IPackageDetails>(OnPackageActionExecuteAsync, OnPackageActionCanExecute);
+            PackageAction = new TaskCommand<IPackage>(OnPackageActionExecuteAsync, OnPackageActionCanExecute);
             CheckForUpdates = new TaskCommand(OnCheckForUpdatesExecuteAsync);
             OpenUpdateWindow = new TaskCommand(OnOpenUpdateWindowExecuteAsync);
 
@@ -99,15 +99,14 @@ namespace Orc.NuGetExplorer.ViewModels
         public bool? IsPrereleaseAllowed { get; set; }
 
         [Model]
-        [Expose("TotalPackagesCount")]
         [Expose("PackageList")]
-        public SearchResult SearchResult { get; private set; }
+        public ExplorerModel ExplorerModel { get; private set; }
 
         public string ActionName { get; private set; }
         public string FilterWatermark { get; private set; }
         public bool ShowUpdates { get; private set; }
-        public IPackageDetails SelectedPackage { get; set; }
-        public ObservableCollection<IPackageDetails> AvailableUpdates { get; private set; }
+        public IPackage SelectedPackage { get; set; }
+        public ObservableCollection<IPackage> AvailableUpdates { get; private set; }
         #endregion
 
         #region Methods
@@ -148,7 +147,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         private async Task SearchAndRefreshAsync()
         {
-            if (_searchingAndRefreshing || SearchResult.PackageList == null || Navigator.SelectedRepository == null)
+            if (_searchingAndRefreshing || ExplorerModel.PackageList == null || Navigator.SelectedRepository == null)
             {
                 return;
             }
@@ -186,7 +185,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         private void OnSelectedRepositoryChanged()
         {
-            if (_searchingAndRefreshing || SearchResult.PackageList == null || Navigator.SelectedRepository == null)
+            if (_searchingAndRefreshing || ExplorerModel.PackageList == null || Navigator.SelectedRepository == null)
             {
                 return;
             }
@@ -274,7 +273,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
             try
             {
-                _dispatcherService.BeginInvoke(() => SearchResult.PackageList.Clear());
+                _dispatcherService.BeginInvoke(() => ExplorerModel.PackageList.Clear());
 
                 using (ScopeManager<AuthenticationScope>.GetScopeManager(selectedRepository.Source.GetSafeScopeName(), () => new AuthenticationScope()))
                 {
@@ -282,16 +281,13 @@ namespace Orc.NuGetExplorer.ViewModels
                     {
                         var searchSettings = SearchSettings;
 
-                        SearchResult.TotalPackagesCount = await TaskHelper.Run(() => _packageQueryService.CountPackages(selectedRepository, searchSettings.SearchFilter, IsPrereleaseAllowed ?? true), true);
-
-                        var packageDetails = await TaskHelper.Run(() => _packageQueryService.GetPackages(selectedRepository, IsPrereleaseAllowed ?? true, searchSettings.SearchFilter, searchSettings.PackagesToSkip), true);
-                        var packages = packageDetails;
+                        var packages = await _packageQueryService.GetPackagesAsync(searchSettings.SearchFilter, IsPrereleaseAllowed ?? false, selectedRepository, ExplorerModel.CancellationToken);
 
                         _dispatcherService.BeginInvoke(() =>
                         {
-                            using (SearchResult.PackageList.SuspendChangeNotifications())
+                            using (ExplorerModel.PackageList.SuspendChangeNotifications())
                             {
-                                CollectionExtensions.AddRange(((ICollection<IPackageDetails>)SearchResult.PackageList), packages);
+                                CollectionExtensions.AddRange(((ICollection<IPackage>)ExplorerModel.PackageList), packages);
                             }
                         });
                     }
@@ -311,9 +307,9 @@ namespace Orc.NuGetExplorer.ViewModels
         #endregion
 
         #region Commands
-        public TaskCommand<IPackageDetails> PackageAction { get; private set; }
+        public TaskCommand<IPackage> PackageAction { get; private set; }
 
-        private async Task OnPackageActionExecuteAsync(IPackageDetails package)
+        private async Task OnPackageActionExecuteAsync(IPackage package)
         {
             if (Navigator.SelectedRepository == null)
             {
@@ -334,7 +330,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         private void RefreshCanExecute()
         {
-            foreach (var package in SearchResult.PackageList)
+            foreach (var package in ExplorerModel.PackageList)
             {
                 package.IsInstalled = null;
 
@@ -342,7 +338,7 @@ namespace Orc.NuGetExplorer.ViewModels
             }
         }
 
-        private bool OnPackageActionCanExecute(IPackageDetails parameter)
+        private bool OnPackageActionCanExecute(IPackage parameter)
         {
             if (Navigator.SelectedRepository == null)
             {
@@ -367,7 +363,7 @@ namespace Orc.NuGetExplorer.ViewModels
             {
                 var packages = await TaskHelper.Run(() => _packagesUpdatesSearcherService.SearchForUpdates(), true);
 
-                AvailableUpdates = new ObservableCollection<IPackageDetails>(packages);
+                AvailableUpdates = new ObservableCollection<IPackage>(packages);
             }
 
             await OnOpenUpdateWindowExecuteAsync();
