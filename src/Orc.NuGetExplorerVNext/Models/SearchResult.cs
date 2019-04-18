@@ -11,13 +11,20 @@ namespace Orc.NuGetExplorer
     using System.Collections.Generic;
     using System.Linq;
     using Catel.Data;
+    using NuGet.Protocol.Core.Types;
 
-    public sealed class SearchResult : SearchResult<IPackageDetails>
+    public sealed class SearchResult : SearchResult<IPackageSearchMetadata>
     {
-        public SearchResult(IReadOnlyList<IPackageDetails> items) 
+        public SearchResult(IReadOnlyList<IPackageSearchMetadata> items) 
             : base(items)
         {
         }
+
+        public static SearchResult FromItems(params IPackageSearchMetadata[] items) => new SearchResult(items);
+
+        public static SearchResult FromItems(IReadOnlyList<IPackageSearchMetadata> items) => new SearchResult(items);
+
+        public static SearchResult Empty() => new SearchResult(new IPackageSearchMetadata[] { });
     }
 
     public class SearchResult<T> : ModelBase, IEnumerable<T>
