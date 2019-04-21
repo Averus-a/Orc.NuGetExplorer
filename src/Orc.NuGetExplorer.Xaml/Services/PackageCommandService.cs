@@ -72,11 +72,11 @@ namespace Orc.NuGetExplorer
             return Enum.GetName(typeof(PackageOperationType), operationType);
         }
 
-        public async Task ExecuteAsync(PackageOperationType operationType, IPackageDetails packageDetails, IRepository sourceRepository = null, bool allowedPrerelease = false)
+        public async Task ExecuteAsync(PackageOperationType operationType, IPackageSearchMetadata package, IRepository sourceRepository = null, bool allowedPrerelease = false)
         {
-            Argument.IsNotNull(() => packageDetails);
+            Argument.IsNotNull(() => package);
 
-            var selectedPackage = await GetPackageDetailsFromSelectedVersionAsync(packageDetails, sourceRepository?.SourceRepository ?? _localRepository) ?? packageDetails;
+            var selectedPackage = await GetPackageDetailsFromSelectedVersionAsync(package, sourceRepository?.SourceRepository ?? _localRepository) ?? package;
 
             using (_pleaseWaitService.WaitingScope())
             {
@@ -100,10 +100,10 @@ namespace Orc.NuGetExplorer
                 }
             }
 
-            packageDetails.IsInstalled = null;
+//            package.IsInstalled = null;
         }
 
-        public async Task<bool> CanExecuteAsync(PackageOperationType operationType, IPackageDetails package)
+        public async Task<bool> CanExecuteAsync(PackageOperationType operationType, IPackageSearchMetadata package)
         {
             if (package == null)
             {
@@ -149,28 +149,30 @@ namespace Orc.NuGetExplorer
             return $"{Enum.GetName(typeof(PackageOperationType), operationType)} all";
         }
 
-        private async Task<IPackageDetails> GetPackageDetailsFromSelectedVersionAsync(IPackageDetails packageDetails, SourceRepository repository)
+        private async Task<IPackageSearchMetadata> GetPackageDetailsFromSelectedVersionAsync(IPackageSearchMetadata package, SourceRepository repository)
         {
-            if (!string.IsNullOrWhiteSpace(packageDetails.SelectedVersion) && packageDetails.Version.ToString() != packageDetails.SelectedVersion)
-            {
-                packageDetails = await _packageQueryService.GetExactPackageAsync(repository, packageDetails.Id, packageDetails.SelectedVersion, CancellationToken.None);
-            }
+            //if (!string.IsNullOrWhiteSpace(package.SelectedVersion) && package.Identity.Version.ToString() != package.SelectedVersion)
+            //{
+            //    package = await _packageQueryService.GetExactPackageAsync(repository, package.Id, package.SelectedVersion, CancellationToken.None);
+            //}
 
-            return packageDetails;
+            return package;
         }
 
-        private async Task<bool> CanInstallAsync(IPackageDetails package)
+        private async Task<bool> CanInstallAsync(IPackageSearchMetadata package)
         {
             Argument.IsNotNull(() => package);
 
-            if (package.IsInstalled == null)
-            {
-                var somePackages = await _packageQueryService.GetPackagesAsync(_localRepository, package.Id, true, 1, CancellationToken.None);
-                package.IsInstalled = somePackages.Any();
-                await ValidatePackageAsync(package);
-            }
+            //if (package.IsInstalled == null)
+            //{
+            //    var somePackages = await _packageQueryService.GetPackagesAsync(_localRepository, package.Id, true, 1, CancellationToken.None);
+            //    package.IsInstalled = somePackages.Any();
+            //    await ValidatePackageAsync(package);
+            //}
 
-            return package.IsInstalled != null && !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;
+            //return package.IsInstalled != null && !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;
+
+            return true;
         }
 
         private Task ValidatePackageAsync(IPackageDetails package)
@@ -180,19 +182,21 @@ namespace Orc.NuGetExplorer
             return _apiPackageRegistry.ValidateAsync(package);
         }
 
-        private async Task<bool> CanUpdateAsync(IPackageDetails package)
+        private async Task<bool> CanUpdateAsync(IPackageSearchMetadata package)
         {
             Argument.IsNotNull(() => package);
 
-            if (package.IsInstalled == null)
-            {
-                var somePackages = await _packageQueryService.GetPackagesAsync(_localRepository, package.Id, true, 1, CancellationToken.None);
-                package.IsInstalled = somePackages.Any();
+            //if (package.IsInstalled == null)
+            //{
+            //    var somePackages = await _packageQueryService.GetPackagesAsync(_localRepository, package.Id, true, 1, CancellationToken.None);
+            //    package.IsInstalled = somePackages.Any();
 
-                await ValidatePackageAsync(package);
-            }
+            //    await ValidatePackageAsync(package);
+            //}
 
-            return !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;
+            //return !package.IsInstalled.Value && package.ValidationContext.GetErrorCount(ValidationTags.Api) == 0;
+
+            return true;
         }
         #endregion
     }

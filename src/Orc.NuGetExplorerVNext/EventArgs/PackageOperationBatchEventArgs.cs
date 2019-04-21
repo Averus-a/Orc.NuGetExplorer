@@ -9,11 +9,12 @@ namespace Orc.NuGetExplorer
 {
     using System.ComponentModel;
     using Catel;
+    using NuGet.Protocol.Core.Types;
 
     public class PackageOperationBatchEventArgs : CancelEventArgs
     {
         #region Constructors
-        internal PackageOperationBatchEventArgs(PackageOperationType operationType, params IPackageDetails[] packages)
+        internal PackageOperationBatchEventArgs(PackageOperationType operationType, params IPackageSearchMetadata[] packages)
         {
             Argument.IsNotNull(() => packages);
 
@@ -23,7 +24,7 @@ namespace Orc.NuGetExplorer
         #endregion
 
         #region Properties
-        public IPackageDetails[] Packages { get; private set; }
+        public IPackageSearchMetadata[] Packages { get; private set; }
         public PackageOperationType OperationType { get; private set; }
         #endregion
     }

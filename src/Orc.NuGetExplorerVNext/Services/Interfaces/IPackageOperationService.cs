@@ -7,12 +7,14 @@
 
 namespace Orc.NuGetExplorer
 {
+    using NuGet.Protocol.Core.Types;
+
     public interface IPackageOperationService
     {
         #region Methods
-        void UninstallPackage(IPackageDetails package);
-        void InstallPackage(IPackageDetails package, bool allowedPrerelease);
-        void UpdatePackages(IPackageDetails package, bool allowedPrerelease);
+        void UninstallPackage(IPackageSearchMetadata package);
+        void InstallPackage(IPackageSearchMetadata package, bool allowedPrerelease);
+        void UpdatePackages(IPackageSearchMetadata package, bool allowedPrerelease);
         #endregion
     }
 }

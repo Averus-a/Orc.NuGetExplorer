@@ -10,6 +10,7 @@ namespace Orc.NuGetExplorer
     using System;
     using Catel;
     using Catel.IoC;
+    using NuGet.Protocol.Core.Types;
 
     internal class PackageOperationContextService : IPackageOperationContextService
     {
@@ -38,7 +39,7 @@ namespace Orc.NuGetExplorer
         #region Methods
         public event EventHandler<OperationContextEventArgs> OperationContextDisposing;
 
-        public IDisposable UseOperationContext(PackageOperationType operationType, params IPackageDetails[] packages)
+        public IDisposable UseOperationContext(PackageOperationType operationType, params IPackageSearchMetadata[] packages)
         {
             var context = _typeFactory.CreateInstance<TemporaryFileSystemContext>();
             return new DisposableToken<PackageOperationContext>(new PackageOperationContext {OperationType = operationType, Packages = packages, FileSystemContext = context},

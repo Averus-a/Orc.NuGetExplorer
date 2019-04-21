@@ -6,19 +6,21 @@
 
 namespace Orc.NuGetExplorer
 {
+    using NuGet.Protocol.Core.Types;
+
     public class PackageOperationService : IPackageOperationService
     {
-        public void UninstallPackage(IPackageDetails package)
+        public void UninstallPackage(IPackageSearchMetadata package)
         {
             throw new System.NotImplementedException();
         }
 
-        public void InstallPackage(IPackageDetails package, bool allowedPrerelease)
+        public void InstallPackage(IPackageSearchMetadata package, bool allowedPrerelease)
         {
             throw new System.NotImplementedException();
         }
 
-        public void UpdatePackages(IPackageDetails package, bool allowedPrerelease)
+        public void UpdatePackages(IPackageSearchMetadata package, bool allowedPrerelease)
         {
             throw new System.NotImplementedException();
         }

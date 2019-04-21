@@ -12,79 +12,35 @@ namespace Orc.NuGetExplorer
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Catel;
+    using Catel.Services;
     using NuGet.Common;
+    using NuGet.Indexing;
     using NuGet.ProjectManagement;
     using NuGet.Protocol.Core.Types;
+    using Telemetry;
 
     public sealed class MultiSourcePackageFeed : IPackageFeed
     {
-        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
+        #region Fields
         private const int PageSize = 25;
+        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
+        private readonly IDispatcherService _dispatcherService;
+        private readonly INuGetUILogger _logger;
 
         private readonly SourceRepository[] _sourceRepositories;
-        private readonly INuGetUILogger _logger;
         private readonly INuGetTelemetryService _telemetryService;
+        #endregion
 
-        public bool IsMultiSource => _sourceRepositories.Length > 1;
-
-        private class TelemetryState
-        {
-            private int _emittedFlag = 0;
-
-            public TelemetryState(Guid parentId, int pageIndex)
-            {
-                OperationId = parentId;
-                PageIndex = pageIndex;
-                Duration = Stopwatch.StartNew();
-            }
-
-            public Guid OperationId { get; }
-            public int PageIndex { get; }
-            public Stopwatch Duration { get; }
-
-            /// <summary>
-            /// This telemetry state should be emitted exactly once. This property will return true the first time it
-            /// is called, then false for every subsequent call.
-            /// </summary>
-            public bool ShouldEmit
-            {
-                get
-                {
-                    var value = Interlocked.CompareExchange(ref _emittedFlag, 1, 0);
-                    return value == 0;
-                }
-            }
-
-            public TelemetryState NextPage()
-            {
-                return new TelemetryState(OperationId, PageIndex + 1);
-            }
-        }
-
-        private class AggregatedSearchCursor : SearchCursor
-        {
-            public TelemetryState TelemetryState  { get; set; }
-            public IDictionary<string, SearchCursor> SourceSearchCursors { get; set; } = new Dictionary<string, SearchCursor>();
-        }
-
-        private class AggregatedRefreshToken
-        {
-            public TimeSpan RetryAfter { get; set; }
-            public TelemetryState TelemetryState { get; set; }
-            public string SearchString { get; set; }
-            public IDictionary<string, Task<SearchResult<IPackageSearchMetadata>>> SearchTasks { get; set; }
-            public IDictionary<string, SearchStatus> SourceSearchStatus { get; set; }
-        }
-
+        #region Constructors
         public MultiSourcePackageFeed(
             IEnumerable<SourceRepository> sourceRepositories,
             INuGetUILogger logger,
-            INuGetTelemetryService telemetryService)
+            INuGetTelemetryService telemetryService,
+            IDispatcherService dispatcherService)
         {
-            if (sourceRepositories == null)
-            {
-                throw new ArgumentNullException(nameof(sourceRepositories));
-            }
+            Argument.IsNotNull(() => sourceRepositories);
+            Argument.IsNotNull(() => dispatcherService);
 
             if (!sourceRepositories.Any())
             {
@@ -93,9 +49,16 @@ namespace Orc.NuGetExplorer
 
             _sourceRepositories = sourceRepositories.ToArray();
             _telemetryService = telemetryService;
+            _dispatcherService = dispatcherService;
             _logger = logger;
         }
+        #endregion
 
+        #region Properties
+        public bool IsMultiSource => _sourceRepositories.Length > 1;
+        #endregion
+
+        #region Methods
         public async Task<SearchResult<IPackageSearchMetadata>> SearchAsync(string searchText, SearchFilter filter, CancellationToken cancellationToken)
         {
             var searchOperationId = Guid.NewGuid();
@@ -121,7 +84,7 @@ namespace Orc.NuGetExplorer
             return await WaitForCompletionOrBailOutAsync(
                 searchText,
                 searchTasks,
-                new TelemetryState(searchOperationId, pageIndex: 0),
+                new TelemetryState(searchOperationId, 0),
                 cancellationToken);
         }
 
@@ -138,7 +101,7 @@ namespace Orc.NuGetExplorer
                 .Join(searchToken.SourceSearchCursors,
                     r => r.PackageSource.Name,
                     c => c.Key,
-                    (r, c) => new { Repository = r, NextToken = c.Value });
+                    (r, c) => new {Repository = r, NextToken = c.Value});
 
             var searchTasks = TaskCombinators.ObserveErrorsAsync(
                 searchTokens,
@@ -225,27 +188,26 @@ namespace Orc.NuGetExplorer
 
                 foreach (var item in statuses)
                 {
-                    aggregated.SourceSearchStatus.Add(item);
+                    aggregated.SearchStatusBySource.Add(item);
                 }
 
                 var exceptions = notCompleted
                     .Where(kv => kv.Value.Exception != null)
                     .ToDictionary(
                         kv => kv.Key,
-                        kv => (Exception) kv.Value.Exception);
+                        kv => (Exception)kv.Value.Exception);
 
                 foreach (var item in exceptions)
                 {
-                    aggregated.SourceSearchException.Add(item);
+                    aggregated.SearchExceptionBySource.Add(item);
                 }
             }
 
-            if (_telemetryService != null
-                && aggregated.SourceSearchStatus != null
-                && aggregated.SourceSearchStatus.Values != null
-                && telemetryState != null)
+            if (_telemetryService != null &&
+                aggregated.SearchStatusBySource?.Values != null &&
+                telemetryState != null)
             {
-                var loadingStatus = aggregated.SourceSearchStatus.Values.Aggregate();
+                var loadingStatus = aggregated.SearchStatusBySource.Values.Aggregate();
                 if (loadingStatus != SearchStatus.Loading
                     && telemetryState.ShouldEmit)
                 {
@@ -262,23 +224,23 @@ namespace Orc.NuGetExplorer
             return aggregated;
         }
 
-        private static LoadingStatus GetLoadingStatus(TaskStatus taskStatus)
+        private static SearchStatus GetLoadingStatus(TaskStatus taskStatus)
         {
-            switch(taskStatus)
+            switch (taskStatus)
             {
                 case TaskStatus.Canceled:
-                    return LoadingStatus.Cancelled;
+                    return SearchStatus.Cancelled;
                 case TaskStatus.Created:
                 case TaskStatus.RanToCompletion:
                 case TaskStatus.Running:
                 case TaskStatus.WaitingForActivation:
                 case TaskStatus.WaitingForChildrenToComplete:
                 case TaskStatus.WaitingToRun:
-                    return LoadingStatus.Loading;
+                    return SearchStatus.Loading;
                 case TaskStatus.Faulted:
-                    return LoadingStatus.ErrorOccurred;
+                    return SearchStatus.Failed;
                 default:
-                    return LoadingStatus.Unknown;
+                    return SearchStatus.Unknown;
             }
         }
 
@@ -292,7 +254,7 @@ namespace Orc.NuGetExplorer
             var nonEmptyResults = results.Where(r => r.Any()).ToArray();
             if (nonEmptyResults.Length == 0)
             {
-                result = SearchResult.Empty<IPackageSearchMetadata>();
+                result = SearchResult.Empty();
             }
             else if (nonEmptyResults.Length == 1)
             {
@@ -309,7 +271,7 @@ namespace Orc.NuGetExplorer
 
                 result = SearchResult.FromItems(aggregatedItems.ToArray());
                 // set correct count of unmerged items
-                result.RawItemsCount = items.Aggregate(0, (r, next) => r + next.Count);
+                result.TotalItemsCount = items.Aggregate(0, (r, next) => r + next.Count);
             }
 
             result.SearchStatusBySource = results
@@ -342,16 +304,74 @@ namespace Orc.NuGetExplorer
                 return;
             }
 
-            // UI logger only can be engaged from the main thread
-            NuGetUIThreadHelper.JoinableTaskFactory.RunAsync(async () =>
+            _dispatcherService.Invoke(() =>
             {
-                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
                 var errorMessage = ExceptionUtilities.DisplayMessage(task.Exception);
                 _logger.Log(
                     MessageLevel.Error,
-                    $"[{state.ToString()}] {errorMessage}");
+                    $"[{state}] {errorMessage}");
             });
+        }
+        #endregion
+
+        private class TelemetryState
+        {
+            #region Fields
+            private int _emittedFlag;
+            #endregion
+
+            #region Constructors
+            public TelemetryState(Guid parentId, int pageIndex)
+            {
+                OperationId = parentId;
+                PageIndex = pageIndex;
+                Duration = Stopwatch.StartNew();
+            }
+            #endregion
+
+            #region Properties
+            public Guid OperationId { get; }
+            public int PageIndex { get; }
+            public Stopwatch Duration { get; }
+
+            /// <summary>
+            ///     This telemetry state should be emitted exactly once. This property will return true the first time it
+            ///     is called, then false for every subsequent call.
+            /// </summary>
+            public bool ShouldEmit
+            {
+                get
+                {
+                    var value = Interlocked.CompareExchange(ref _emittedFlag, 1, 0);
+                    return value == 0;
+                }
+            }
+            #endregion
+
+            #region Methods
+            public TelemetryState NextPage()
+            {
+                return new TelemetryState(OperationId, PageIndex + 1);
+            }
+            #endregion
+        }
+
+        private class AggregatedSearchCursor : SearchCursor
+        {
+            #region Properties
+            public TelemetryState TelemetryState { get; set; }
+            public IDictionary<string, SearchCursor> SourceSearchCursors { get; set; } = new Dictionary<string, SearchCursor>();
+            #endregion
+        }
+
+        private class AggregatedRefreshToken : RefreshToken
+        {
+            #region Properties
+            public TelemetryState TelemetryState { get; set; }
+            public string SearchString { get; set; }
+            public IDictionary<string, Task<SearchResult<IPackageSearchMetadata>>> SearchTasks { get; set; }
+            public IDictionary<string, SearchStatus> SourceSearchStatus { get; set; }
+            #endregion
         }
     }
 }

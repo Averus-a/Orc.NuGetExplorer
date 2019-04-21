@@ -17,6 +17,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="Catel.MVVM" Version="5.10.0" />
     <PackageReference Include="LoadAssembliesOnStartup.Fody" Version="3.0.8" />
     <PackageReference Include="MethodTimer.Fody" Version="2.3.3" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Web.Xdt" Version="2.1.2" />
@@ -30,6 +31,7 @@
     <PackageReference Include="NuGet.Commands" Version="4.9.4" />
     <PackageReference Include="NuGet.Credentials" Version="4.9.4" />
     <PackageReference Include="NuGet.Frameworks" Version="4.9.4" />
+    <PackageReference Include="NuGet.Indexing" Version="4.9.4" />
     <PackageReference Include="NuGet.LibraryModel" Version="4.9.4" />
     <PackageReference Include="NuGet.PackageManagement" Version="4.9.4" />
     <PackageReference Include="NuGet.Packaging.Core" Version="4.9.4" />

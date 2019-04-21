@@ -9,18 +9,19 @@ namespace Orc.NuGetExplorer
 {
     using System.Collections.ObjectModel;
     using Catel.Collections;
+    using NuGet.Protocol.Core.Types;
 
     public class PackagesBatch
     {
         #region Constructors
         public PackagesBatch()
         {
-            PackageList = new FastObservableCollection<IPackageDetails>();
+            PackageList = new FastObservableCollection<IPackageSearchMetadata>();
         }
         #endregion
 
         #region Properties
-        public ObservableCollection<IPackageDetails> PackageList { get; set; }
+        public ObservableCollection<IPackageSearchMetadata> PackageList { get; set; }
         public PackageOperationType OperationType { get; set; }
         #endregion
     }

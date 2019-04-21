@@ -79,7 +79,7 @@ namespace Orc.NuGetExplorer.ViewModels
             }
             else
             {
-                PackageSummary = await _packageDetailsService.PackageToFlowDocumentAsync(Package);
+                PackageSummary = await _packageDetailsService.PackageToFlowDocumentAsync(((PackageDetails)Package).SearchMetadata);
             }
         }
         #endregion

@@ -9,11 +9,12 @@ namespace Orc.NuGetExplorer
 {
     using System.Threading.Tasks;
     using System.Windows.Documents;
+    using NuGet.Protocol.Core.Types;
 
     internal interface IPackageDetailsService
     {
         #region Methods
-        Task<FlowDocument> PackageToFlowDocumentAsync(IPackageDetails package);
+        Task<FlowDocument> PackageToFlowDocumentAsync(IPackageSearchMetadata package);
         #endregion
     }
 }

@@ -12,13 +12,16 @@ namespace Orc.NuGetExplorer
 
     public abstract class SingleSourcePackageFeedBase : IPackageFeed
     {
+        #region Properties
         public int PageSize { get; protected set; } = 100;
 
         public bool IsMultiSource => false;
+        #endregion
 
+        #region Methods
         public Task<SearchResult<IPackageSearchMetadata>> SearchAsync(string searchText, SearchFilter searchFilter, CancellationToken cancellationToken)
         {
-            var searchCursor = new SearchCursor()
+            var searchCursor = new SearchCursor
             {
                 SearchString = searchText,
                 SearchFilter = searchFilter,
@@ -29,5 +32,11 @@ namespace Orc.NuGetExplorer
         }
 
         public abstract Task<SearchResult<IPackageSearchMetadata>> ContinueSearchAsync(SearchCursor searchCursor, CancellationToken cancellationToken);
+
+        public Task<SearchResult<IPackageSearchMetadata>> RefreshSearchAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(SearchResult.Empty());
+        }
+        #endregion
     }
 }

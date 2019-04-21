@@ -7,14 +7,15 @@
 namespace Orc.NuGetExplorer
 {
     using System;
+    using NuGet.Protocol.Core.Types;
 
     public interface IPackageOperationNotificationService
     {
         #region Methods
-        void NotifyOperationBatchStarting(PackageOperationType operationType, params IPackageDetails[] packages);
-        void NotifyOperationBatchFinished(PackageOperationType operationType, params IPackageDetails[] packages);
-        void NotifyOperationFinished(string installPath, PackageOperationType operationType, IPackageDetails packageDetails);
-        void NotifyOperationStarting(string installPath, PackageOperationType operationType, IPackageDetails packageDetails);
+        void NotifyOperationBatchStarting(PackageOperationType operationType, params IPackageSearchMetadata[] packages);
+        void NotifyOperationBatchFinished(PackageOperationType operationType, params IPackageSearchMetadata[] packages);
+        void NotifyOperationFinished(string installPath, PackageOperationType operationType, IPackageSearchMetadata package);
+        void NotifyOperationStarting(string installPath, PackageOperationType operationType, IPackageSearchMetadata package);
         #endregion
 
         #region Events

@@ -19,5 +19,8 @@ namespace Orc.NuGetExplorer
 
         Task<SearchResult<IPackageSearchMetadata>> ContinueSearchAsync(
             SearchCursor searchCursor, CancellationToken cancellationToken);
+
+        Task<SearchResult<IPackageSearchMetadata>> RefreshSearchAsync(
+            RefreshToken refreshToken, CancellationToken cancellationToken);
     }
 }

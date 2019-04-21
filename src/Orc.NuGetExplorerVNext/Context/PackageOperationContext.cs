@@ -10,6 +10,7 @@ namespace Orc.NuGetExplorer
     using System;
     using System.Collections.Generic;
     using Catel;
+    using NuGet.Protocol.Core.Types;
 
     internal class PackageOperationContext : IPackageOperationContext, IUniqueIdentifyable
     {
@@ -24,7 +25,7 @@ namespace Orc.NuGetExplorer
         #region Properties
         public int UniqueIdentifier { get; }
         public IRepository Repository { get; set; }
-        public IPackageDetails[] Packages { get; set; }
+        public IPackageSearchMetadata[] Packages { get; set; }
         public PackageOperationType OperationType { get; set; }
         public IPackageOperationContext Parent { get; set; }
         public IList<Exception> CatchedExceptions { get; private set; }

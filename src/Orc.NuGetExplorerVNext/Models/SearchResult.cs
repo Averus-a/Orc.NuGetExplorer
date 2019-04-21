@@ -9,49 +9,75 @@ namespace Orc.NuGetExplorer
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Linq;
     using Catel.Data;
     using NuGet.Protocol.Core.Types;
 
     public sealed class SearchResult : SearchResult<IPackageSearchMetadata>
     {
-        public SearchResult(IReadOnlyList<IPackageSearchMetadata> items) 
+        #region Constructors
+        public SearchResult(IReadOnlyList<IPackageSearchMetadata> items)
             : base(items)
         {
         }
+        #endregion
 
-        public static SearchResult FromItems(params IPackageSearchMetadata[] items) => new SearchResult(items);
+        #region Properties
+        public List<IPackageSearchMetadata> PackageList => Items;
+        #endregion
 
-        public static SearchResult FromItems(IReadOnlyList<IPackageSearchMetadata> items) => new SearchResult(items);
+        #region Methods
+        public static SearchResult FromItems(params IPackageSearchMetadata[] items)
+        {
+            return new SearchResult(items);
+        }
 
-        public static SearchResult Empty() => new SearchResult(new IPackageSearchMetadata[] { });
+        public static SearchResult FromItems(IReadOnlyList<IPackageSearchMetadata> items)
+        {
+            return new SearchResult(items);
+        }
+
+        public static SearchResult<IPackageSearchMetadata> Empty()
+        {
+            return new SearchResult<IPackageSearchMetadata>(new IPackageSearchMetadata[] { });
+        }
+        #endregion
     }
 
     public class SearchResult<T> : ModelBase, IEnumerable<T>
     {
+        #region Constructors
         public SearchResult(IReadOnlyList<T> items)
         {
-            PackageList = (List<T>)items;
+            Items = (List<T>)items;
         }
+        #endregion
 
-        public List<T> PackageList { get; private set; }
+        #region Properties
+        public List<T> Items { get; }
 
         public SearchCursor Cursor { get; set; }
 
-        public bool CanContinue { get; private set; } //=> SearchStatusBySource.Values.Any(x => x != SearchStatus.NoMoreFound && x != SearchStatus.NothingFound);
+        public RefreshToken RefreshToken { get; set; }
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return PackageList.GetEnumerator();
-        }
+        public Guid? OperationId { get; set; }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return PackageList.GetEnumerator();
-        }
+        public int TotalItemsCount { get; set; }
 
         public IDictionary<string, SearchStatus> SearchStatusBySource { get; set; } = new Dictionary<string, SearchStatus>();
 
         public IDictionary<string, Exception> SearchExceptionBySource { get; set; } = new Dictionary<string, Exception>();
+        #endregion
+
+        #region Methods
+        public IEnumerator<T> GetEnumerator()
+        {
+            return Items.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Items.GetEnumerator();
+        }
+        #endregion
     }
 }

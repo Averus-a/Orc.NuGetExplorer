@@ -8,32 +8,33 @@ namespace Orc.NuGetExplorer
 {
     using System;
     using Catel;
+    using NuGet.Protocol.Core.Types;
 
     public class PackageOperationNotificationService : IPackageOperationNotificationService
     {
         #region Methods
-        public void NotifyOperationStarting(string installPath, PackageOperationType operationType, IPackageDetails packageDetails)
+        public void NotifyOperationStarting(string installPath, PackageOperationType operationType, IPackageSearchMetadata package)
         {
-            Argument.IsNotNull(() => packageDetails);
+            Argument.IsNotNull(() => package);
 
-            OperationStarting?.Invoke(this, new PackageOperationEventArgs(packageDetails, installPath, operationType));
+            OperationStarting?.Invoke(this, new PackageOperationEventArgs(package, installPath, operationType));
         }
 
-        public void NotifyOperationFinished(string installPath, PackageOperationType operationType, IPackageDetails packageDetails)
+        public void NotifyOperationFinished(string installPath, PackageOperationType operationType, IPackageSearchMetadata package)
         {
-            Argument.IsNotNull(() => packageDetails);
+            Argument.IsNotNull(() => package);
 
-            OperationFinished?.Invoke(this, new PackageOperationEventArgs(packageDetails, installPath, operationType));
+            OperationFinished?.Invoke(this, new PackageOperationEventArgs(package, installPath, operationType));
         }
 
-        public void NotifyOperationBatchStarting(PackageOperationType operationType, params IPackageDetails[] packages)
+        public void NotifyOperationBatchStarting(PackageOperationType operationType, params IPackageSearchMetadata[] packages)
         {
             Argument.IsNotNullOrEmptyArray(() => packages);
 
             OperationsBatchStarting?.Invoke(this, new PackageOperationBatchEventArgs(operationType, packages));
         }
 
-        public void NotifyOperationBatchFinished(PackageOperationType operationType, params IPackageDetails[] packages)
+        public void NotifyOperationBatchFinished(PackageOperationType operationType, params IPackageSearchMetadata[] packages)
         {
             Argument.IsNotNullOrEmptyArray(() => packages);
 

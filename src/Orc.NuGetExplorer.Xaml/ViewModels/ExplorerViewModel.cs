@@ -24,6 +24,7 @@ namespace Orc.NuGetExplorer.ViewModels
     using Catel.Threading;
     using MethodTimer;
     using NuGet;
+    using NuGet.Protocol.Core.Types;
     using Scopes;
     using CollectionExtensions = Catel.Collections.CollectionExtensions;
 
@@ -76,7 +77,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
             AvailableUpdates = new ObservableCollection<IPackageDetails>();
 
-            PackageAction = new TaskCommand<IPackageDetails>(OnPackageActionExecuteAsync, OnPackageActionCanExecute);
+            PackageAction = new TaskCommand<IPackageSearchMetadata>(OnPackageActionExecuteAsync, OnPackageActionCanExecute);
             CheckForUpdates = new TaskCommand(OnCheckForUpdatesExecuteAsync);
             OpenUpdateWindow = new TaskCommand(OnOpenUpdateWindowExecuteAsync);
 
@@ -300,9 +301,9 @@ namespace Orc.NuGetExplorer.ViewModels
         #endregion
 
         #region Commands
-        public TaskCommand<IPackageDetails> PackageAction { get; private set; }
+        public TaskCommand<IPackageSearchMetadata> PackageAction { get; private set; }
 
-        private async Task OnPackageActionExecuteAsync(IPackageDetails package)
+        private async Task OnPackageActionExecuteAsync(IPackageSearchMetadata package)
         {
             if (Navigator.SelectedRepository == null)
             {
@@ -330,13 +331,13 @@ namespace Orc.NuGetExplorer.ViewModels
         {
             foreach (var package in SearchResult.PackageList)
             {
-                package.IsInstalled = null;
+              //  package.IsInstalled = null;
 
                 await _packageCommandService.CanExecuteAsync(Navigator.SelectedRepository.OperationType, package);
             }
         }
 
-        private async Task<bool> OnPackageActionCanExecuteAsync(IPackageDetails parameter)
+        private async Task<bool> OnPackageActionCanExecuteAsync(IPackageSearchMetadata parameter)
         {
             if (Navigator.SelectedRepository == null)
             {
@@ -346,7 +347,7 @@ namespace Orc.NuGetExplorer.ViewModels
             return await _packageCommandService.CanExecuteAsync(Navigator.SelectedRepository.OperationType, parameter);
         }
 
-        private bool OnPackageActionCanExecute(IPackageDetails parameter)
+        private bool OnPackageActionCanExecute(IPackageSearchMetadata parameter)
         {
             var canExecuteAsync = OnPackageActionCanExecuteAsync(parameter);
 

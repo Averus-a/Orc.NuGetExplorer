@@ -8,6 +8,7 @@
 namespace Orc.NuGetExplorer
 {
     using System;
+    using NuGet.Protocol.Core.Types;
 
     public interface IPackageOperationContextService
     {
@@ -17,7 +18,7 @@ namespace Orc.NuGetExplorer
 
         #region Methods
         event EventHandler<OperationContextEventArgs> OperationContextDisposing;
-        IDisposable UseOperationContext(PackageOperationType operationType, params IPackageDetails[] packages);
+        IDisposable UseOperationContext(PackageOperationType operationType, params IPackageSearchMetadata[] packages);
         #endregion
     }
 }

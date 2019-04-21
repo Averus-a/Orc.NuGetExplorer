@@ -14,6 +14,7 @@ namespace Orc.NuGetExplorer
     using System.Windows.Media;
     using Catel;
     using Catel.Services;
+    using NuGet.Protocol.Core.Types;
 
     internal class PackageDetailsService : IPackageDetailsService
     {
@@ -31,7 +32,7 @@ namespace Orc.NuGetExplorer
         }
 
         #region Methods
-        public async Task<FlowDocument> PackageToFlowDocumentAsync(IPackageDetails package)
+        public async Task<FlowDocument> PackageToFlowDocumentAsync(IPackageSearchMetadata package)
         {
             Argument.IsNotNull(() => package);
 
@@ -45,7 +46,7 @@ namespace Orc.NuGetExplorer
             var autors = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_CreatedBy"), package.Authors);
             paragraph.Inlines.AddIfNotNull(autors);
 
-            var id = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Id"), package.Id);
+            var id = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Id"), package.Identity.Id);
             paragraph.Inlines.AddIfNotNull(id);
 
             var version = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Version"), GetVersion(package));
@@ -66,36 +67,35 @@ namespace Orc.NuGetExplorer
             var downloads = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Downloads"), package.DownloadCount.ToString());
             paragraph.Inlines.AddIfNotNull(downloads);
 
-            var dependencyInfos = await package.Dependencies;
-            if (dependencyInfos.Count == 0)
-            {
-                var dependencies = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Dependencies"), dependencyInfos.Select(x => x.Id).ToArray());
-                paragraph.Inlines.AddIfNotNull(dependencies);
-            }
+            //var dependencyInfos = await package.Dependencies;
+            //if (dependencyInfos.Count == 0)
+            //{
+            //    var dependencies = GetDetailsRecord(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetDetailsRecord_Dependencies"), dependencyInfos.Select(x => x.Id).ToArray());
+            //    paragraph.Inlines.AddIfNotNull(dependencies);
+            //}
 
-            if (package.ValidationContext.GetErrorCount(ValidationTags.Api) > 0)
-            {
-                var validations = GetAlertRecords(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetAlertRecords_Errors"), package.ValidationContext.GetErrors(ValidationTags.Api).Select(s => " - " + s.Message).ToArray());
-                paragraph.Inlines.AddIfNotNull(validations);
-                paragraph.Inlines.Add(new LineBreak());
+            //if (package.ValidationContext.GetErrorCount(ValidationTags.Api) > 0)
+            //{
+            //    var validations = GetAlertRecords(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_GetAlertRecords_Errors"), package.ValidationContext.GetErrors(ValidationTags.Api).Select(s => " - " + s.Message).ToArray());
+            //    paragraph.Inlines.AddIfNotNull(validations);
+            //    paragraph.Inlines.Add(new LineBreak());
 
-                paragraph.Inlines.Add(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_Update_The_Shell_Error_Message").ToInline(Brushes.Red));
-                paragraph.Inlines.Add(new LineBreak());
-            }
+            //    paragraph.Inlines.Add(_languageService.GetString("NuGetExplorer_PackageDetailsService_PackageToFlowDocument_Update_The_Shell_Error_Message").ToInline(Brushes.Red));
+            //    paragraph.Inlines.Add(new LineBreak());
+            //}
 
             result.Blocks.Add(paragraph);
             return result;
         }
 
-        private static string GetVersion(IPackageDetails package)
+        private static string GetVersion(IPackageSearchMetadata package)
         {
-            var packageDetails = (PackageDetails)package;
-            if (!package.IsPrerelease)
+            if (!package.Identity.Version.IsPrerelease)
             {
-                return package.Version.ToString();
+                return package.Identity.Version.ToString();
             }
 
-            return packageDetails.SearchMetadata.Identity.Version.OriginalVersion;
+            return package.Identity.Version.OriginalVersion;
         }
 
         private Inline GetAlertRecords(string title, params string[] stringLines)

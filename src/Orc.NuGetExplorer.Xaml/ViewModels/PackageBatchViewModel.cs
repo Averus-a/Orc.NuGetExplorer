@@ -15,6 +15,7 @@ namespace Orc.NuGetExplorer.ViewModels
     using Catel.Fody;
     using Catel.MVVM;
     using Catel.Threading;
+    using NuGet.Protocol.Core.Types;
 
     internal class PackageBatchViewModel : ViewModelBase
     {
@@ -51,7 +52,7 @@ namespace Orc.NuGetExplorer.ViewModels
 
         public string ActionName { get; private set; }
         public string PluralActionName { get; private set; }
-        public IPackageDetails SelectedPackage { get; set; }
+        public IPackageSearchMetadata SelectedPackage { get; set; }
         #endregion
 
         #region Methods
@@ -105,9 +106,9 @@ namespace Orc.NuGetExplorer.ViewModels
             }
         }
 
-        private async Task<IPackageDetails[]> GetPackagesForOperationAsync(IReadOnlyList<IPackageDetails> packageDetailsList)
+        private async Task<IPackageSearchMetadata[]> GetPackagesForOperationAsync(IReadOnlyList<IPackageSearchMetadata> packageDetailsList)
         {
-            var result = new List<IPackageDetails>(packageDetailsList.Count);
+            var result = new List<IPackageSearchMetadata>(packageDetailsList.Count);
 
             foreach (var packageDetails in packageDetailsList)
             {
@@ -172,7 +173,7 @@ namespace Orc.NuGetExplorer.ViewModels
         {
             foreach (var package in PackagesBatch.PackageList)
             {
-                package.IsInstalled = null;
+               // package.IsInstalled = null;
                 await _packageCommandService.CanExecuteAsync(PackagesBatch.OperationType, package);
             }
         }

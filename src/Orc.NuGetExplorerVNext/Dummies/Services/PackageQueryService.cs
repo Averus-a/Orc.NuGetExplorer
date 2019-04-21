@@ -13,7 +13,7 @@ namespace Orc.NuGetExplorer
 
     internal class PackageQueryService : IPackageQueryService
     {
-        public Task<IPackageDetails> GetExactPackageAsync(SourceRepository repository, string packageId, string version, CancellationToken cancellationToken)
+        public Task<IPackageSearchMetadata> GetExactPackageAsync(SourceRepository repository, string packageId, string version, CancellationToken cancellationToken)
         {
             throw new System.NotImplementedException();
         }

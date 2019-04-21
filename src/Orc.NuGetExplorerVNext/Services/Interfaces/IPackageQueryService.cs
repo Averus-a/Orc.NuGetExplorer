@@ -14,7 +14,7 @@ namespace Orc.NuGetExplorer
     public interface IPackageQueryService
     {
         #region Methods
-        Task<IPackageDetails> GetExactPackageAsync(SourceRepository repository, string packageId, string version, CancellationToken cancellationToken);
+        Task<IPackageSearchMetadata> GetExactPackageAsync(SourceRepository repository, string packageId, string version, CancellationToken cancellationToken);
         Task<SearchResult> GetPackagesAsync(SourceRepository repository, string searchText, bool includePrerelease, int pageSize, CancellationToken cancellationToken);
         Task<SearchResult> GetPackagesAsync(SourceRepository repository, SearchCursor searchCursor, CancellationToken cancellationToken);
         #endregion
